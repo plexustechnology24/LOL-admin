@@ -19,7 +19,6 @@ const CardBg = () => {
     const [imageFileLabel, setImageFileLabel] = useState('Image Prank Image Upload');
     const [filteredData, setFilteredData] = useState([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [selectedFileName, setSelectedFileName] = useState('');
     const [previewUrl, setPreviewUrl] = useState(null);
     const [inputType, setInputType] = useState('file');
     const [imageUrlText, setImageUrlText] = useState('');
@@ -145,7 +144,6 @@ const CardBg = () => {
             if (mode === 'add') {
                 setId(undefined);
                 setImageFileLabel('Image Prank Image Upload');
-                setSelectedFileName('');
                 setImageUrlText('');
                 setSelectedFiles([]);
                 setPreviewUrls([]);
@@ -154,7 +152,6 @@ const CardBg = () => {
             }
         } else {
             setPreviewUrl(null);
-            setSelectedFileName('');
             setImageUrlText('');
             setSelectedFiles([]);
             setPreviewUrls([]);
@@ -410,7 +407,6 @@ const CardBg = () => {
             setId(undefined);
             setExistingImageUrl(''); // NEW: Clear existing image
             setImageFileLabel('Image Prank Image Upload');
-            setSelectedFileName('');
             setImageUrlText('');
             setPreviewUrl(null);
             setInputType('file');
@@ -427,7 +423,6 @@ const CardBg = () => {
 
     const handleEdit = (cardbg) => {
         const fileName = cardbg.CardBg.split('/').pop();
-        setSelectedFileName(fileName);
         setImageUrlText(cardbg.CardBg);
         setInputType('file');
         setExistingImageUrl(cardbg.CardBg);
