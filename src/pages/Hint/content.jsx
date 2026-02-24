@@ -6,7 +6,7 @@ import { Button } from "react-bootstrap";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChevronDown, faEdit, faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { faEdit, faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { faCopy, faFaceSmile } from "@fortawesome/free-regular-svg-icons";
 import CustomPagination from "../../components/common/pagination";
 import { Editor } from 'react-draft-wysiwyg';
