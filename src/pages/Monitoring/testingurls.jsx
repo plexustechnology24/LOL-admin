@@ -24,6 +24,7 @@ const TestingUrls = () => {
         { category: "Roast", link: "https://lolcards.link/test/Um9hc3Q=" },
         { category: "Bluff", link: "https://lolcards.link/test/Qmx1ZmY=" },
         { category: "Challenge", link: "https://lolcards.link/test/Q2hhbGxlbmdl" },
+        { category: "Heaven Hell", link: "https://lolcards.link/test/SGVhdmVuSGVsbA==" },
     ];
 
     const handleCopyToClipboard = (url) => {

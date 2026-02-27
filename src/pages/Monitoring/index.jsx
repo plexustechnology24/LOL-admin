@@ -32,7 +32,8 @@ const CategoryManagement = () => {
         "TG92ZQ==",
         "Um9hc3Q=",
         "Qmx1ZmY=",
-        "Q2hhbGxlbmdl"
+        "Q2hhbGxlbmdl",
+        "SGVhdmVuSGVsbA=="
     ];
     const categoryQuestionCount = {
         "V2hvVGFsa2lu": "1 ques",
@@ -47,7 +48,8 @@ const CategoryManagement = () => {
         "TG92ZQ==": "7 ques",
         "Um9hc3Q=": "8 ques",
         "Qmx1ZmY=": "9 ques",
-        "Q2hhbGxlbmdl": "10 ques"
+        "Q2hhbGxlbmdl": "10 ques",
+        "SGVhdmVuSGVsbA==": "11 ques"
     };
     const [copiedIndex, setCopiedIndex] = useState(null);
 

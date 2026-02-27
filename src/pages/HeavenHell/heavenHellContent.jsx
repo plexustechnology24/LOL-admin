@@ -222,7 +222,7 @@ const HeavenHellContent = () => {
         const currentLength = [...currentText].length; // Use spread operator
 
         // Check character limit
-        if (currentLength >= 150) {
+        if (currentLength >= 25) {
             return 'handled';
         }
 
@@ -258,16 +258,6 @@ const HeavenHellContent = () => {
         });
     };
 
-    const handleBeforeInput = (chars, editorState) => {
-        const currentText = editorState.getCurrentContent().getPlainText();
-        const currentLength = [...currentText].length; // Use spread operator
-
-        if (currentLength >= 150) {
-            return 'handled';  // stops further typing
-        }
-        return 'not-handled';
-    };
-
     const handlePastedText = (text, html, editorState) => {
         const sanitizedText = sanitizeEmojiPlaceholders(text);
 
@@ -276,7 +266,7 @@ const HeavenHellContent = () => {
         const currentText = contentState.getPlainText();
 
         const currentLength = [...currentText].length; // Use spread operator
-        const availableChars = 150 - currentLength;
+        const availableChars = 25 - currentLength;
 
         // If no space left, block paste
         if (availableChars <= 0) {
@@ -361,7 +351,7 @@ const HeavenHellContent = () => {
             category: activeTab2 || undefined
         };
 
-        axios.post('https://api.lolcards.link/api/emotion/content/read', payload)
+        axios.post('https://api.lolcards.link/api/heaven-hell/content/read', payload)
             .then((res) => {
                 setData(res.data.data);
                 setPagination(res.data.pagination);
@@ -425,7 +415,7 @@ const HeavenHellContent = () => {
 
         const payload = {
             ids: selectedItems,
-            TypeId: "3" // Use appropriate TypeId for emotion content
+            TypeId: "3" 
         };
 
         axios.post('https://api.lolcards.link/api/admin/deleteMultiple', payload)
@@ -445,7 +435,7 @@ const HeavenHellContent = () => {
 
     const handleDelete = () => {
         axios
-            .delete(`https://api.lolcards.link/api/emotion/content/delete/${deleteModal.id}`)
+            .delete(`https://api.lolcards.link/api/heaven-hell/content/delete/${deleteModal.id}`)
             .then((res) => {
                 if (currentItems.length === 1 && currentPage > 1) {
                     setCurrentPage(currentPage - 1);
@@ -493,8 +483,8 @@ const HeavenHellContent = () => {
         }
 
         // Check character limit
-        if ([...plainText].length > 150) {
-            toast.error('Content must not exceed 150 characters');
+        if ([...plainText].length > 25) {
+            toast.error('Content must not exceed 25 characters');
             return;
         }
 
@@ -511,12 +501,12 @@ const HeavenHellContent = () => {
 
             if (id) {
                 await axios.patch(
-                    `https://api.lolcards.link/api/emotion/content/update/${id}`,
+                    `https://api.lolcards.link/api/heaven-hell/content/update/${id}`,
                     payload
                 );
             } else {
                 await axios.post(
-                    'https://api.lolcards.link/api/emotion/content/create',
+                    'https://api.lolcards.link/api/heaven-hell/content/create',
                     payload
                 );
             }
@@ -663,7 +653,7 @@ const HeavenHellContent = () => {
 
                             <div className="flex gap-3">
                                 {/* Category Filter */}
-                                <div className="relative inline-block w-64">
+                                <div className="relative inline-block w-64" ref={dropdownRef}>
                                     <button
                                         className="w-full flex items-center justify-between px-4 py-2 bg-white dark:border-gray-800 border rounded-md text-gray-600 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-300"
                                         onClick={() => setIsAccessOpen(!isAccessOpen)}
@@ -706,7 +696,7 @@ const HeavenHellContent = () => {
                                     className="rounded-md border-0 shadow-md px-4 py-2 text-white"
                                     style={{ background: "#FA4B56" }}
                                 >
-                                    <FontAwesomeIcon icon={faPlus} className='pe-2' /> Add Content
+                                    <FontAwesomeIcon icon={faPlus} className='pe-2' /> Add Question
                                 </Button>
                             </div>
                         </div>
@@ -817,7 +807,7 @@ const HeavenHellContent = () => {
                     <div className="relative bg-white rounded-lg w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
                         <div className="px-6 py-4 border-b">
                             <h3 className="text-xl font-semibold">
-                                {id ? "Edit Card Content" : "Add Card Content"}
+                                {id ? "Edit Question" : "Add Question"}
                             </h3>
                         </div>
 
@@ -837,20 +827,18 @@ const HeavenHellContent = () => {
                                             required
                                         >
                                             <option value="">Select Category</option>
-                                            <option value="Angry">Angry</option>
-                                            <option value="Happy">Happy</option>
-                                            <option value="Love">Love</option>
-                                            <option value="Sad">Sad</option>
+                                            <option value="Heaven">Heaven</option>
+                                            <option value="Hell">Hell</option>
                                         </select>
                                     </div>
 
                                     <div className="mb-4 relative">
                                         <label className="block font-medium mb-2">
-                                            Content
+                                            Question
                                             <span className="text-red-500 pl-2 font-normal text-lg">*</span>
                                         </label>
                                         <div className="bg-gray-100 p-2 mb-2 rounded text-sm">
-                                            <p>Type your message and emoji picker for emojis. (Max 150 characters)</p>
+                                            <p>Type your message and emoji picker for emojis. (Max 25 characters)</p>
                                         </div>
 
                                         <div
@@ -894,7 +882,7 @@ const HeavenHellContent = () => {
                                                 editorClassName="demo-editor px-2 m-0 border-0 min-h-[100px]"
                                                 onEditorStateChange={handleEditorStateChange}
                                                 toolbar={toolbarOptions}
-                                                placeholder="Enter content"
+                                                placeholder="Enter question"
                                                 readOnly={isSubmitting}
                                                 handleBeforeInput={(chars) => handleBeforeInputWithStyleClear(chars, editorState)}
                                                 handlePastedText={(text, html) => handlePastedText(text, html, editorState)}
@@ -902,8 +890,8 @@ const HeavenHellContent = () => {
 
 
                                             <div className="border-t border-gray-300 p-2 flex justify-between items-center">
-                                                <span className={`text-sm ${[...editorState.getCurrentContent().getPlainText()].length > 150 ? 'text-red-500' : 'text-gray-500'}`}>
-                                                    {[...editorState.getCurrentContent().getPlainText()].length}/150
+                                                <span className={`text-sm ${[...editorState.getCurrentContent().getPlainText()].length > 25 ? 'text-red-500' : 'text-gray-500'}`}>
+                                                    {[...editorState.getCurrentContent().getPlainText()].length}/25
                                                 </span>
                                                 <button
                                                     type="button"
@@ -978,13 +966,13 @@ const HeavenHellContent = () => {
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[99999]">
                     <div className="bg-white rounded-lg p-6 w-full max-w-sm mx-4 shadow-lg">
                         <h2 className="text-xl font-semibold text-gray-800 mb-3">
-                            {deleteModal.isBulk ? 'Delete Selected Items' : 'Delete Emotion Content'}
+                            {deleteModal.isBulk ? 'Delete Selected Items' : 'Delete Heaven-Hell Question'}
                         </h2>
 
                         <p className="text-gray-700 mb-6">
                             {deleteModal.isBulk
                                 ? `Are you sure you want to delete ${selectedItems.length} selected items?`
-                                : 'Are you sure you want to delete this Emotion Content?'
+                                : 'Are you sure you want to delete this Heaven-Hell Question?'
                             }
                         </p>
 

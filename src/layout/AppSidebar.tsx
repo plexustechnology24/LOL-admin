@@ -1,7 +1,6 @@
 import React, { useEffect, useCallback, useRef, useState } from "react";
 import { Link, useLocation } from "react-router";
 
-// Assume these icons are imported from an icon library
 import { useSidebar } from "../context/SidebarContext";
 import {
   ChevronDownIcon,
@@ -11,7 +10,25 @@ import {
 
 import logo from "../assest/logo.png";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChartLine, faGlobe, faChartPie, faBell, faMoneyBill1, faImagePortrait, faMobile, faPencil, faFaceGrinStars, faFire, faHourglass, faHeart, faHandshake, faMask, faTrophy, faMessage } from "@fortawesome/free-solid-svg-icons";
+import {
+  faChartLine,
+  faGlobe,
+  faChartPie,
+  faBell,
+  faMoneyBill1,
+  faImagePortrait,
+  faMobile,
+  faPencil,
+  faFaceGrinStars,
+  faFire,
+  faHourglass,
+  faHeart,
+  faHandshake,
+  faMask,
+  faTrophy,
+  faMessage,
+  faClock,
+} from "@fortawesome/free-solid-svg-icons";
 
 type NavItem = {
   name: string;
@@ -48,7 +65,6 @@ const navItems: NavItem[] = [
   },
 ];
 
-// 🔹 New question nav items
 const questionItems: NavItem[] = [
   {
     icon: <FontAwesomeIcon icon={faImagePortrait} />,
@@ -59,53 +75,50 @@ const questionItems: NavItem[] = [
     name: "Emotion (4 Ques)",
     icon: <FontAwesomeIcon icon={faFaceGrinStars} />,
     subItems: [
-      { name: "CardBg", path: "/emotion/cardBg", pro: false },
-      { name: "Emoji", path: "/emotion/emoji", pro: false },
-      { name: "Content", path: "/emotion/content", pro: false },
+      { name: "CardBg", path: "/emotion/cardBg" },
+      { name: "Emoji", path: "/emotion/emoji" },
+      { name: "Content", path: "/emotion/content" },
     ],
   },
   {
     name: "Hotness (6 Ques)",
     icon: <FontAwesomeIcon icon={faFire} />,
     subItems: [
-      { name: "Category", path: "/hotness/category", pro: false },
-      { name: "CardBg", path: "/hotness/cardBg", pro: false },
+      { name: "Category", path: "/hotness/category" },
+      { name: "CardBg", path: "/hotness/cardBg" },
     ],
   },
   {
-    name: "Friends or Love or Crush (7 Ques)",
     icon: <FontAwesomeIcon icon={faHeart} />,
-    subItems: [
-      { name: "CardBg", path: "/friend/cardBg", pro: false },
-    ],
+    name: "Friends or Love or Crush CardBg (7 Ques)",
+    path: "/friend/cardBg",
   },
   {
-    name: "Bluff (9 Ques)",
     icon: <FontAwesomeIcon icon={faMask} />,
-    subItems: [
-      { name: "CardBg", path: "/bluff/cardBg", pro: false },
-    ],
+    name: "Bluff CardBg (9 Ques)",
+    path: "/bluff/cardBg",
   },
   {
-    name: "Challenge (10 Ques)",
     icon: <FontAwesomeIcon icon={faTrophy} />,
-    subItems: [
-      { name: "Content", path: "/challenge/content", pro: false },
-    ],
+    name: "Challenge Content (10 Ques)",
+    path: "/challenge/content",
   },
   {
     name: "Heaven Hell (11 Ques)",
     icon: <FontAwesomeIcon icon={faFire} />,
     subItems: [
-      { name: "CardBg", path: "/heaven-hell/cardBg", pro: false },
-      { name: "Content", path: "/heaven-hell/content", pro: false },
+      { name: "CardBg", path: "/heaven-hell/cardBg" },
+      { name: "Content", path: "/heaven-hell/content" },
     ],
+  },
+  {
+    icon: <FontAwesomeIcon icon={faClock} />,
+    name: "Coming Soon",
+    path: "/coming-soon",
   },
 ];
 
-// 🔹 New notification nav items
 const notificationItems: NavItem[] = [
-
   {
     icon: <FontAwesomeIcon icon={faGlobe} />,
     name: "Push Notification",
@@ -123,7 +136,6 @@ const notificationItems: NavItem[] = [
   },
 ];
 
-// 🔹 New analytics nav items
 const analyticsItems: NavItem[] = [
   {
     icon: <FontAwesomeIcon icon={faMobile} />,
@@ -156,7 +168,6 @@ const AppSidebar: React.FC = () => {
     index: number;
   } | null>(null);
 
-  // 🔹 New state for section dropdowns
   const [openSections, setOpenSections] = useState<{
     general: boolean;
     question: boolean;
@@ -170,29 +181,31 @@ const AppSidebar: React.FC = () => {
   });
 
   const [subMenuHeight, setSubMenuHeight] = useState<Record<string, number>>({});
-  const [sectionHeight, setSectionHeight] = useState<Record<string, number>>({});
-
   const subMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
-  const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const isActive = useCallback(
     (path: string) => location.pathname === path,
     [location.pathname]
   );
 
+  // Auto-open submenu based on active route
   useEffect(() => {
     let submenuMatched = false;
-    ["main", "analytics", "question", "notification"].forEach((menuType) => {
-      const items = menuType === "main" ? navItems : menuType === "analytics" ? analyticsItems : menuType === "question" ? questionItems : notificationItems;
+    (["main", "analytics", "question", "notification"] as const).forEach((menuType) => {
+      const items =
+        menuType === "main"
+          ? navItems
+          : menuType === "analytics"
+          ? analyticsItems
+          : menuType === "question"
+          ? questionItems
+          : notificationItems;
 
       items.forEach((nav, index) => {
         if (nav.subItems) {
           nav.subItems.forEach((subItem) => {
             if (isActive(subItem.path)) {
-              setOpenSubmenu({
-                type: menuType as "main" | "analytics" | "question" | "notification",
-                index,
-              });
+              setOpenSubmenu({ type: menuType, index });
               submenuMatched = true;
             }
           });
@@ -205,47 +218,32 @@ const AppSidebar: React.FC = () => {
     }
   }, [location, isActive]);
 
+  // Measure submenu heights when opened
   useEffect(() => {
     if (openSubmenu !== null) {
       const key = `${openSubmenu.type}-${openSubmenu.index}`;
       if (subMenuRefs.current[key]) {
-        setSubMenuHeight((prevHeights) => ({
-          ...prevHeights,
+        setSubMenuHeight((prev) => ({
+          ...prev,
           [key]: subMenuRefs.current[key]?.scrollHeight || 0,
         }));
       }
     }
   }, [openSubmenu]);
 
-  // 🔹 Update section heights when they open/close
-  useEffect(() => {
-    Object.keys(openSections).forEach((sectionKey) => {
-      if (sectionRefs.current[sectionKey]) {
-        setSectionHeight((prevHeights) => ({
-          ...prevHeights,
-          [sectionKey]: sectionRefs.current[sectionKey]?.scrollHeight || 0,
-        }));
-      }
-    });
-  }, [openSections, openSubmenu, isExpanded, isHovered, isMobileOpen]);
-
   const handleSubmenuToggle = (
     index: number,
     menuType: "main" | "analytics" | "question" | "notification"
   ) => {
-    setOpenSubmenu((prevOpenSubmenu) => {
-      if (
-        prevOpenSubmenu &&
-        prevOpenSubmenu.type === menuType &&
-        prevOpenSubmenu.index === index
-      ) {
+    setOpenSubmenu((prev) => {
+      if (prev && prev.type === menuType && prev.index === index) {
         return null;
       }
       return { type: menuType, index };
     });
   };
 
-  // 🔹 Toggle section dropdown
+  // ✅ Simple toggle — no height measurement needed for sections
   const toggleSection = (section: keyof typeof openSections) => {
     setOpenSections((prev) => ({
       ...prev,
@@ -253,26 +251,30 @@ const AppSidebar: React.FC = () => {
     }));
   };
 
-  const renderMenuItems = (items: NavItem[], menuType: "main" | "analytics" | "question" | "notification") => (
+  const renderMenuItems = (
+    items: NavItem[],
+    menuType: "main" | "analytics" | "question" | "notification"
+  ) => (
     <ul className="flex flex-col gap-4">
       {items.map((nav, index) => (
         <li key={nav.name}>
           {nav.subItems ? (
             <button
               onClick={() => handleSubmenuToggle(index, menuType)}
-              className={`menu-item group ${openSubmenu?.type === menuType && openSubmenu?.index === index
-                ? "menu-item-active"
-                : "menu-item-inactive"
-                } cursor-pointer ${!isExpanded && !isHovered
-                  ? "lg:justify-center"
-                  : "lg:justify-start"
-                }`}
+              className={`menu-item group ${
+                openSubmenu?.type === menuType && openSubmenu?.index === index
+                  ? "menu-item-active"
+                  : "menu-item-inactive"
+              } cursor-pointer ${
+                !isExpanded && !isHovered ? "lg:justify-center" : "lg:justify-start"
+              }`}
             >
               <span
-                className={`${openSubmenu?.type === menuType && openSubmenu?.index === index
-                  ? "menu-item-icon-active"
-                  : "menu-item-icon-inactive"
-                  }`}
+                className={`${
+                  openSubmenu?.type === menuType && openSubmenu?.index === index
+                    ? "menu-item-icon-active"
+                    : "menu-item-icon-inactive"
+                }`}
               >
                 {nav.icon}
               </span>
@@ -281,11 +283,11 @@ const AppSidebar: React.FC = () => {
               )}
               {(isExpanded || isHovered || isMobileOpen) && (
                 <ChevronDownIcon
-                  className={`ml-auto w-5 h-5 transition-transform duration-200 ${openSubmenu?.type === menuType &&
-                    openSubmenu?.index === index
-                    ? "rotate-180 text-brand-500"
-                    : ""
-                    }`}
+                  className={`ml-auto w-5 h-5 transition-transform duration-200 ${
+                    openSubmenu?.type === menuType && openSubmenu?.index === index
+                      ? "rotate-180 text-brand-500"
+                      : ""
+                  }`}
                 />
               )}
             </button>
@@ -293,14 +295,16 @@ const AppSidebar: React.FC = () => {
             nav.path && (
               <Link
                 to={nav.path}
-                className={`menu-item group ${isActive(nav.path) ? "menu-item-active" : "menu-item-inactive"
-                  }`}
+                className={`menu-item group ${
+                  isActive(nav.path) ? "menu-item-active" : "menu-item-inactive"
+                }`}
               >
                 <span
-                  className={`${isActive(nav.path)
-                    ? "menu-item-icon-active"
-                    : "menu-item-icon-inactive"
-                    }`}
+                  className={`${
+                    isActive(nav.path)
+                      ? "menu-item-icon-active"
+                      : "menu-item-icon-inactive"
+                  }`}
                 >
                   {nav.icon}
                 </span>
@@ -310,6 +314,7 @@ const AppSidebar: React.FC = () => {
               </Link>
             )
           )}
+
           {nav.subItems && (isExpanded || isHovered || isMobileOpen) && (
             <div
               ref={(el) => {
@@ -318,8 +323,7 @@ const AppSidebar: React.FC = () => {
               className="overflow-hidden transition-all duration-300"
               style={{
                 height:
-                  openSubmenu?.type === menuType &&
-                    openSubmenu?.index === index
+                  openSubmenu?.type === menuType && openSubmenu?.index === index
                     ? `${subMenuHeight[`${menuType}-${index}`]}px`
                     : "0px",
               }}
@@ -329,29 +333,32 @@ const AppSidebar: React.FC = () => {
                   <li key={subItem.name}>
                     <Link
                       to={subItem.path}
-                      className={`menu-dropdown-item ${isActive(subItem.path)
-                        ? "menu-dropdown-item-active"
-                        : "menu-dropdown-item-inactive"
-                        }`}
+                      className={`menu-dropdown-item ${
+                        isActive(subItem.path)
+                          ? "menu-dropdown-item-active"
+                          : "menu-dropdown-item-inactive"
+                      }`}
                     >
                       {subItem.name}
                       <span className="flex items-center gap-1 ml-auto">
                         {subItem.new && (
                           <span
-                            className={`ml-auto ${isActive(subItem.path)
-                              ? "menu-dropdown-badge-active"
-                              : "menu-dropdown-badge-inactive"
-                              } menu-dropdown-badge`}
+                            className={`ml-auto ${
+                              isActive(subItem.path)
+                                ? "menu-dropdown-badge-active"
+                                : "menu-dropdown-badge-inactive"
+                            } menu-dropdown-badge`}
                           >
                             new
                           </span>
                         )}
                         {subItem.pro && (
                           <span
-                            className={`ml-auto ${isActive(subItem.path)
-                              ? "menu-dropdown-badge-active"
-                              : "menu-dropdown-badge-inactive"
-                              } menu-dropdown-badge`}
+                            className={`ml-auto ${
+                              isActive(subItem.path)
+                                ? "menu-dropdown-badge-active"
+                                : "menu-dropdown-badge-inactive"
+                            } menu-dropdown-badge`}
                           >
                             pro
                           </span>
@@ -368,12 +375,53 @@ const AppSidebar: React.FC = () => {
     </ul>
   );
 
+  // ✅ Reusable section renderer to avoid repetition
+  const renderSection = (
+    key: keyof typeof openSections,
+    label: string,
+    items: NavItem[],
+    menuType: "main" | "analytics" | "question" | "notification"
+  ) => (
+    <div>
+      <button
+        onClick={() => toggleSection(key)}
+        className={`mb-4 w-full text-xs uppercase flex items-center leading-[20px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors ${
+          !isExpanded && !isHovered ? "lg:justify-center" : "justify-between"
+        }`}
+      >
+        {isExpanded || isHovered || isMobileOpen ? (
+          <>
+            <span>{label}</span>
+            <ChevronDownIcon
+              className={`w-4 h-4 transition-transform duration-200 ${
+                openSections[key] ? "rotate-180" : ""
+              }`}
+            />
+          </>
+        ) : (
+          <HorizontaLDots />
+        )}
+      </button>
+
+      {/* ✅ Using maxHeight instead of height — no measurement needed */}
+      <div
+        className="overflow-hidden transition-all duration-300 ease-in-out"
+        style={{
+          maxHeight: openSections[key] ? "1000px" : "0px",
+        }}
+      >
+        {renderMenuItems(items, menuType)}
+      </div>
+    </div>
+  );
+
   return (
     <aside
       className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 
-        ${isExpanded || isMobileOpen
-          ? "w-[260px]"
-          : isHovered
+        ${
+          isExpanded || isMobileOpen
+            ? "w-[260px]"
+            : isHovered
             ? "w-[260px]"
             : "w-[90px]"
         }
@@ -383,161 +431,22 @@ const AppSidebar: React.FC = () => {
       onMouseLeave={() => setIsHovered(false)}
     >
       <div
-        className={`py-4 flex ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
-          }`}
+        className={`py-4 flex ${
+          !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
+        }`}
       >
         <Link to="/" className="mx-auto">
-          <>
-            <img src={logo} alt="Logo" width={100} />
-          </>
+          <img src={logo} alt="Logo" width={100} />
         </Link>
       </div>
+
       <div className="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar">
         <nav className="mb-6">
           <div className="flex flex-col gap-4">
-            {/* 🔹 General Section */}
-            <div>
-              <button
-                onClick={() => toggleSection("general")}
-                className={`mb-4 w-full text-xs uppercase flex items-center leading-[20px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors ${!isExpanded && !isHovered
-                  ? "lg:justify-center"
-                  : "justify-between"
-                  }`}
-              >
-                {isExpanded || isHovered || isMobileOpen ? (
-                  <>
-                    <span>General</span>
-                    <ChevronDownIcon
-                      className={`w-4 h-4 transition-transform duration-200 ${openSections.general ? "rotate-180" : ""
-                        }`}
-                    />
-                  </>
-                ) : (
-                  <HorizontaLDots />
-                )}
-              </button>
-              <div
-                ref={(el) => {
-                  sectionRefs.current["general"] = el;
-                }}
-                className="overflow-hidden transition-all duration-300"
-                style={{
-                  height: openSections.general
-                    ? `${sectionHeight["general"]}px`
-                    : "0px",
-                }}
-              >
-                {renderMenuItems(navItems, "main")}
-              </div>
-            </div>
-
-            {/* 🔹 Question Section */}
-            <div>
-              <button
-                onClick={() => toggleSection("question")}
-                className={`mb-4 w-full text-xs uppercase flex items-center leading-[20px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors ${!isExpanded && !isHovered
-                  ? "lg:justify-center"
-                  : "justify-between"
-                  }`}
-              >
-                {isExpanded || isHovered || isMobileOpen ? (
-                  <>
-                    <span>Question</span>
-                    <ChevronDownIcon
-                      className={`w-4 h-4 transition-transform duration-200 ${openSections.question ? "rotate-180" : ""
-                        }`}
-                    />
-                  </>
-                ) : (
-                  <HorizontaLDots />
-                )}
-              </button>
-              <div
-                ref={(el) => {
-                  sectionRefs.current["question"] = el;
-                }}
-                className="overflow-hidden transition-all duration-300"
-                style={{
-                  height: openSections.question
-                    ? `${sectionHeight["question"]}px`
-                    : "0px",
-                }}
-              >
-                {renderMenuItems(questionItems, "question")}
-              </div>
-            </div>
-
-            {/* 🔹 Notification Section */}
-            <div>
-              <button
-                onClick={() => toggleSection("notification")}
-                className={`mb-4 w-full text-xs uppercase flex items-center leading-[20px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors ${!isExpanded && !isHovered
-                  ? "lg:justify-center"
-                  : "justify-between"
-                  }`}
-              >
-                {isExpanded || isHovered || isMobileOpen ? (
-                  <>
-                    <span>Notification</span>
-                    <ChevronDownIcon
-                      className={`w-4 h-4 transition-transform duration-200 ${openSections.notification ? "rotate-180" : ""
-                        }`}
-                    />
-                  </>
-                ) : (
-                  <HorizontaLDots />
-                )}
-              </button>
-              <div
-                ref={(el) => {
-                  sectionRefs.current["notification"] = el;
-                }}
-                className="overflow-hidden transition-all duration-300"
-                style={{
-                  height: openSections.notification
-                    ? `${sectionHeight["notification"]}px`
-                    : "0px",
-                }}
-              >
-                {renderMenuItems(notificationItems, "notification")}
-              </div>
-            </div>
-
-            {/* 🔹 Analytics Section */}
-            <div>
-              <button
-                onClick={() => toggleSection("analytics")}
-                className={`mb-4 w-full text-xs uppercase flex items-center leading-[20px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors ${!isExpanded && !isHovered
-                  ? "lg:justify-center"
-                  : "justify-between"
-                  }`}
-              >
-                {isExpanded || isHovered || isMobileOpen ? (
-                  <>
-                    <span>Analytics</span>
-                    <ChevronDownIcon
-                      className={`w-4 h-4 transition-transform duration-200 ${openSections.analytics ? "rotate-180" : ""
-                        }`}
-                    />
-                  </>
-                ) : (
-                  <HorizontaLDots />
-                )}
-              </button>
-              <div
-                ref={(el) => {
-                  sectionRefs.current["analytics"] = el;
-                }}
-                className="overflow-hidden transition-all duration-300"
-                style={{
-                  height: openSections.analytics
-                    ? `${sectionHeight["analytics"]}px`
-                    : "0px",
-                }}
-              >
-                {renderMenuItems(analyticsItems, "analytics")}
-              </div>
-            </div>
+            {renderSection("general", "General", navItems, "main")}
+            {renderSection("question", "Question", questionItems, "question")}
+            {renderSection("notification", "Notification", notificationItems, "notification")}
+            {renderSection("analytics", "Analytics", analyticsItems, "analytics")}
           </div>
         </nav>
       </div>

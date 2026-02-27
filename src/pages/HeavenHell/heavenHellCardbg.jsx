@@ -87,7 +87,7 @@ const HeavenHellCardBg = () => {
             category: activeTab2 || undefined
         };
 
-        axios.post('http://localhost:5004/api/heaven-hell/read', payload)
+        axios.post('https://api.lolcards.link/api/heaven-hell/read', payload)
             .then((res) => {
                 setData(res.data.data);
                 setPagination(res.data.pagination);
@@ -157,7 +157,7 @@ const HeavenHellCardBg = () => {
             TypeId: "13"
         };
 
-        axios.post('http://localhost:5004/api/admin/deleteMultiple', payload)
+        axios.post('https://api.lolcards.link/api/admin/deleteMultiple', payload)
             .then(() => {
                 toast.success(`Successfully deleted ${selectedItems.length} items.`);
                 getData();
@@ -187,7 +187,7 @@ const HeavenHellCardBg = () => {
 
     const handleDelete = () => {
         axios
-            .delete(`http://localhost:5004/api/heaven-hell/delete/${deleteModal.id}`)
+            .delete(`https://api.lolcards.link/api/heaven-hell/delete/${deleteModal.id}`)
             .then((res) => {
                 if (currentItems.length === 1 && currentPage > 1) {
                     setCurrentPage(currentPage - 1);
@@ -458,7 +458,7 @@ const HeavenHellCardBg = () => {
                     formData.append('Category', Category);
 
                     const response = await axios.patch(
-                        `http://localhost:5004/api/heaven-hell/update/${id}`,
+                        `https://api.lolcards.link/api/heaven-hell/update/${id}`,
                         formData
                     );
                     toast.success(response.data.message || 'Successfully updated');
@@ -467,7 +467,7 @@ const HeavenHellCardBg = () => {
                     formData.append('Category', Category);
 
                     const response = await axios.patch(
-                        `http://localhost:5004/api/heaven-hell/update/${id}`,
+                        `https://api.lolcards.link/api/heaven-hell/update/${id}`,
                         formData
                     );
                     toast.success(response.data.message || 'Category updated successfully');
@@ -489,7 +489,7 @@ const HeavenHellCardBg = () => {
                     formData.append('CardBg', file);
                     formData.append('Category', Category);
                     uploadPromises.push(
-                        axios.post('http://localhost:5004/api/heaven-hell/create', formData)
+                        axios.post('https://api.lolcards.link/api/heaven-hell/create', formData)
                     );
                 }
 

@@ -30,6 +30,7 @@ import TestingUrls from "./pages/Monitoring/testingurls";
 import Message from "./pages/Message/message";
 import HeavenHellCardBg from "./pages/HeavenHell/heavenHellCardbg";
 import HeavenHellContent from "./pages/HeavenHell/heavenHellContent";
+import ComingSoon from "./pages/comingSoon/comingSoon";
 
 export default function App() {
   return (
@@ -59,6 +60,7 @@ export default function App() {
           <Route path="challenge/content" element={<AdminProtect><ChallengeContent /></AdminProtect>} />
           <Route path="auto-notification" element={<AdminProtect><AutoNotification /></AdminProtect>} />
           <Route path="push-notification" element={<AdminProtect><PushNotification /></AdminProtect>} />
+          <Route path="coming-soon" element={<AdminProtect><ComingSoon /></AdminProtect>} />
           <Route path="collab" element={<AdminProtect><Collab /></AdminProtect>} />
           <Route path="temp" element={<AdminProtect><Temp /></AdminProtect>} />
           <Route path="message" element={<AdminProtect><Message /></AdminProtect>} />

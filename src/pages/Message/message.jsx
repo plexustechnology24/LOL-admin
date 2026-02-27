@@ -184,7 +184,8 @@ const Message = () => {
         "TG92ZQ==": { name: "Love", count: "7 ques" },
         "Um9hc3Q=": { name: "Roast", count: "8 ques" },
         "Qmx1ZmY=": { name: "Bluff", count: "9 ques" },
-        "Q2hhbGxlbmdl": { name: "Challenge", count: "10 ques" }
+        "Q2hhbGxlbmdl": { name: "Challenge", count: "10 ques" },
+        "SGVhdmVuSGVsbA==": { name: "Heaven Hell", count: "11 ques" }
     };
 
     // Field mapping for each category
