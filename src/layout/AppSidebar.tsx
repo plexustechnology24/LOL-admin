@@ -93,11 +93,19 @@ const questionItems: NavItem[] = [
       { name: "Content", path: "/challenge/content", pro: false },
     ],
   },
+  {
+    name: "Heaven Hell (11 Ques)",
+    icon: <FontAwesomeIcon icon={faFire} />,
+    subItems: [
+      { name: "CardBg", path: "/heaven-hell/cardBg", pro: false },
+      { name: "Content", path: "/heaven-hell/content", pro: false },
+    ],
+  },
 ];
 
 // 🔹 New notification nav items
 const notificationItems: NavItem[] = [
-  
+
   {
     icon: <FontAwesomeIcon icon={faGlobe} />,
     name: "Push Notification",
@@ -147,7 +155,7 @@ const AppSidebar: React.FC = () => {
     type: "main" | "analytics" | "question" | "notification";
     index: number;
   } | null>(null);
-  
+
   // 🔹 New state for section dropdowns
   const [openSections, setOpenSections] = useState<{
     general: boolean;
@@ -163,7 +171,7 @@ const AppSidebar: React.FC = () => {
 
   const [subMenuHeight, setSubMenuHeight] = useState<Record<string, number>>({});
   const [sectionHeight, setSectionHeight] = useState<Record<string, number>>({});
-  
+
   const subMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
@@ -253,8 +261,8 @@ const AppSidebar: React.FC = () => {
             <button
               onClick={() => handleSubmenuToggle(index, menuType)}
               className={`menu-item group ${openSubmenu?.type === menuType && openSubmenu?.index === index
-                  ? "menu-item-active"
-                  : "menu-item-inactive"
+                ? "menu-item-active"
+                : "menu-item-inactive"
                 } cursor-pointer ${!isExpanded && !isHovered
                   ? "lg:justify-center"
                   : "lg:justify-start"
@@ -262,8 +270,8 @@ const AppSidebar: React.FC = () => {
             >
               <span
                 className={`${openSubmenu?.type === menuType && openSubmenu?.index === index
-                    ? "menu-item-icon-active"
-                    : "menu-item-icon-inactive"
+                  ? "menu-item-icon-active"
+                  : "menu-item-icon-inactive"
                   }`}
               >
                 {nav.icon}
@@ -274,9 +282,9 @@ const AppSidebar: React.FC = () => {
               {(isExpanded || isHovered || isMobileOpen) && (
                 <ChevronDownIcon
                   className={`ml-auto w-5 h-5 transition-transform duration-200 ${openSubmenu?.type === menuType &&
-                      openSubmenu?.index === index
-                      ? "rotate-180 text-brand-500"
-                      : ""
+                    openSubmenu?.index === index
+                    ? "rotate-180 text-brand-500"
+                    : ""
                     }`}
                 />
               )}
@@ -290,8 +298,8 @@ const AppSidebar: React.FC = () => {
               >
                 <span
                   className={`${isActive(nav.path)
-                      ? "menu-item-icon-active"
-                      : "menu-item-icon-inactive"
+                    ? "menu-item-icon-active"
+                    : "menu-item-icon-inactive"
                     }`}
                 >
                   {nav.icon}
@@ -322,8 +330,8 @@ const AppSidebar: React.FC = () => {
                     <Link
                       to={subItem.path}
                       className={`menu-dropdown-item ${isActive(subItem.path)
-                          ? "menu-dropdown-item-active"
-                          : "menu-dropdown-item-inactive"
+                        ? "menu-dropdown-item-active"
+                        : "menu-dropdown-item-inactive"
                         }`}
                     >
                       {subItem.name}
@@ -331,8 +339,8 @@ const AppSidebar: React.FC = () => {
                         {subItem.new && (
                           <span
                             className={`ml-auto ${isActive(subItem.path)
-                                ? "menu-dropdown-badge-active"
-                                : "menu-dropdown-badge-inactive"
+                              ? "menu-dropdown-badge-active"
+                              : "menu-dropdown-badge-inactive"
                               } menu-dropdown-badge`}
                           >
                             new
@@ -341,8 +349,8 @@ const AppSidebar: React.FC = () => {
                         {subItem.pro && (
                           <span
                             className={`ml-auto ${isActive(subItem.path)
-                                ? "menu-dropdown-badge-active"
-                                : "menu-dropdown-badge-inactive"
+                              ? "menu-dropdown-badge-active"
+                              : "menu-dropdown-badge-inactive"
                               } menu-dropdown-badge`}
                           >
                             pro
@@ -392,17 +400,16 @@ const AppSidebar: React.FC = () => {
               <button
                 onClick={() => toggleSection("general")}
                 className={`mb-4 w-full text-xs uppercase flex items-center leading-[20px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors ${!isExpanded && !isHovered
-                    ? "lg:justify-center"
-                    : "justify-between"
+                  ? "lg:justify-center"
+                  : "justify-between"
                   }`}
               >
                 {isExpanded || isHovered || isMobileOpen ? (
                   <>
                     <span>General</span>
                     <ChevronDownIcon
-                      className={`w-4 h-4 transition-transform duration-200 ${
-                        openSections.general ? "rotate-180" : ""
-                      }`}
+                      className={`w-4 h-4 transition-transform duration-200 ${openSections.general ? "rotate-180" : ""
+                        }`}
                     />
                   </>
                 ) : (
@@ -429,17 +436,16 @@ const AppSidebar: React.FC = () => {
               <button
                 onClick={() => toggleSection("question")}
                 className={`mb-4 w-full text-xs uppercase flex items-center leading-[20px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors ${!isExpanded && !isHovered
-                    ? "lg:justify-center"
-                    : "justify-between"
+                  ? "lg:justify-center"
+                  : "justify-between"
                   }`}
               >
                 {isExpanded || isHovered || isMobileOpen ? (
                   <>
                     <span>Question</span>
                     <ChevronDownIcon
-                      className={`w-4 h-4 transition-transform duration-200 ${
-                        openSections.question ? "rotate-180" : ""
-                      }`}
+                      className={`w-4 h-4 transition-transform duration-200 ${openSections.question ? "rotate-180" : ""
+                        }`}
                     />
                   </>
                 ) : (
@@ -466,17 +472,16 @@ const AppSidebar: React.FC = () => {
               <button
                 onClick={() => toggleSection("notification")}
                 className={`mb-4 w-full text-xs uppercase flex items-center leading-[20px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors ${!isExpanded && !isHovered
-                    ? "lg:justify-center"
-                    : "justify-between"
+                  ? "lg:justify-center"
+                  : "justify-between"
                   }`}
               >
                 {isExpanded || isHovered || isMobileOpen ? (
                   <>
                     <span>Notification</span>
                     <ChevronDownIcon
-                      className={`w-4 h-4 transition-transform duration-200 ${
-                        openSections.notification ? "rotate-180" : ""
-                      }`}
+                      className={`w-4 h-4 transition-transform duration-200 ${openSections.notification ? "rotate-180" : ""
+                        }`}
                     />
                   </>
                 ) : (
@@ -503,17 +508,16 @@ const AppSidebar: React.FC = () => {
               <button
                 onClick={() => toggleSection("analytics")}
                 className={`mb-4 w-full text-xs uppercase flex items-center leading-[20px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors ${!isExpanded && !isHovered
-                    ? "lg:justify-center"
-                    : "justify-between"
+                  ? "lg:justify-center"
+                  : "justify-between"
                   }`}
               >
                 {isExpanded || isHovered || isMobileOpen ? (
                   <>
                     <span>Analytics</span>
                     <ChevronDownIcon
-                      className={`w-4 h-4 transition-transform duration-200 ${
-                        openSections.analytics ? "rotate-180" : ""
-                      }`}
+                      className={`w-4 h-4 transition-transform duration-200 ${openSections.analytics ? "rotate-180" : ""
+                        }`}
                     />
                   </>
                 ) : (

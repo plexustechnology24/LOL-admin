@@ -28,6 +28,8 @@ import ChallengeContent from "./pages/Challenge/challengeContent";
 import BluffCardBg from "./pages/Bluff/cardbg";
 import TestingUrls from "./pages/Monitoring/testingurls";
 import Message from "./pages/Message/message";
+import HeavenHellCardBg from "./pages/HeavenHell/heavenHellCardbg";
+import HeavenHellContent from "./pages/HeavenHell/heavenHellContent";
 
 export default function App() {
   return (
@@ -52,6 +54,8 @@ export default function App() {
           <Route path="hotness/cardBg" element={<AdminProtect><HotnessCardBg /></AdminProtect>} />
           <Route path="friend/cardBg" element={<AdminProtect><FriendCardBg /></AdminProtect>} />
           <Route path="bluff/cardBg" element={<AdminProtect><BluffCardBg /></AdminProtect>} />
+          <Route path="heaven-hell/cardBg" element={<AdminProtect><HeavenHellCardBg /></AdminProtect>} />
+          <Route path="heaven-hell/content" element={<AdminProtect><HeavenHellContent /></AdminProtect>} />
           <Route path="challenge/content" element={<AdminProtect><ChallengeContent /></AdminProtect>} />
           <Route path="auto-notification" element={<AdminProtect><AutoNotification /></AdminProtect>} />
           <Route path="push-notification" element={<AdminProtect><PushNotification /></AdminProtect>} />
