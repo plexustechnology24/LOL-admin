@@ -31,6 +31,13 @@ import Message from "./pages/Message/message";
 import HeavenHellCardBg from "./pages/HeavenHell/heavenHellCardbg";
 import HeavenHellContent from "./pages/HeavenHell/heavenHellContent";
 import ComingSoon from "./pages/comingSoon/comingSoon";
+import PicRoastContent from "./pages/PicRoast/content";
+import ConfessionContent from "./pages/Confession/content";
+import HotnessContent from "./pages/Hotness/content";
+import FriendContent from "./pages/Friends/content";
+import RoastContent from "./pages/Roast/content";
+import BluffContent from "./pages/Bluff/content";
+import HeavenHellContent2 from "./pages/HeavenHell/content";
 
 export default function App() {
   return (
@@ -56,8 +63,15 @@ export default function App() {
           <Route path="friend/cardBg" element={<AdminProtect><FriendCardBg /></AdminProtect>} />
           <Route path="bluff/cardBg" element={<AdminProtect><BluffCardBg /></AdminProtect>} />
           <Route path="heaven-hell/cardBg" element={<AdminProtect><HeavenHellCardBg /></AdminProtect>} />
-          <Route path="heaven-hell/content" element={<AdminProtect><HeavenHellContent /></AdminProtect>} />
+          <Route path="heaven-hell/question" element={<AdminProtect><HeavenHellContent /></AdminProtect>} />
           <Route path="challenge/content" element={<AdminProtect><ChallengeContent /></AdminProtect>} />
+          <Route path="picRoast/content" element={<AdminProtect><PicRoastContent /></AdminProtect>} />
+          <Route path="confession/content" element={<AdminProtect><ConfessionContent /></AdminProtect>} />
+          <Route path="friend/content" element={<AdminProtect><FriendContent /></AdminProtect>} />
+          <Route path="hotness/content" element={<AdminProtect><HotnessContent /></AdminProtect>} />
+          <Route path="roast/content" element={<AdminProtect><RoastContent /></AdminProtect>} />
+          <Route path="bluff/content" element={<AdminProtect><BluffContent /></AdminProtect>} />
+          <Route path="heaven-hell/content" element={<AdminProtect><HeavenHellContent2 /></AdminProtect>} />
           <Route path="auto-notification" element={<AdminProtect><AutoNotification /></AdminProtect>} />
           <Route path="push-notification" element={<AdminProtect><PushNotification /></AdminProtect>} />
           <Route path="coming-soon" element={<AdminProtect><ComingSoon /></AdminProtect>} />

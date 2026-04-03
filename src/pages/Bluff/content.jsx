@@ -14,7 +14,7 @@ import EmojiPicker from 'emoji-picker-react';
 import { EditorState, Modifier, convertToRaw, convertFromRaw, RichUtils } from 'draft-js';
 
 
-const ChallengeContent = () => {
+const BluffContent = () => {
     const [visible, setVisible] = useState(false);
     const [data, setData] = useState([]);
     const [pagination, setPagination] = useState([]);
@@ -24,6 +24,7 @@ const ChallengeContent = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(15);
+    const [Category, setCategory] = useState('');
     const [deleteModal, setDeleteModal] = useState({ isOpen: false, id: null, isBulk: false });
     const [selectedItems, setSelectedItems] = useState([]);
     const [selectAll, setSelectAll] = useState(false);
@@ -31,7 +32,7 @@ const ChallengeContent = () => {
 
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [editorState, setEditorState] = useState(EditorState.createEmpty());
-    const [savedSelection, setSavedSelection] = useState(null); // NEW: Save cursor position
+    const [savedSelection, setSavedSelection] = useState(null);
     const [errors, setErrors] = useState({});
     const emojiPickerRef = useRef(null);
     const editorRef = useRef(null);
@@ -39,12 +40,19 @@ const ChallengeContent = () => {
 
     const [isAccessOpen, setIsAccessOpen] = useState(false);
     const [activeTab2, setActiveTab2] = useState('');
+    // NEW: separate state for the form category dropdown
+    const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
 
+    // Updated accessTypes with images — replace URLs with your actual assets
     const accessTypes = [
-        { id: 'Angry', label: 'Angry' },
-        { id: 'Happy', label: 'Happy' },
-        { id: 'Love', label: 'Love' },
-        { id: 'Sad', label: 'Sad' }
+        { id: 'Money',  label: 'Money',  image: "https://lol-image-bucket.s3.ap-south-1.amazonaws.com/images/question9/money.png"  },
+        { id: 'Love',   label: 'Love',   image: "https://lol-image-bucket.s3.ap-south-1.amazonaws.com/images/question9/love.png"   },
+        { id: 'Flex',   label: 'Flex',   image: "https://lol-image-bucket.s3.ap-south-1.amazonaws.com/images/question9/flex.png"   },
+        { id: 'Clout',  label: 'Clout',  image: "https://lol-image-bucket.s3.ap-south-1.amazonaws.com/images/question9/clout.png"  },
+        { id: 'Wins',   label: 'Wins',   image: "https://lol-image-bucket.s3.ap-south-1.amazonaws.com/images/question9/wins.png"   },
+        { id: 'Cringe', label: 'Cringe', image: "https://lol-image-bucket.s3.ap-south-1.amazonaws.com/images/question9/cringe.png" },
+        { id: 'Savage', label: 'Savage', image: "https://lol-image-bucket.s3.ap-south-1.amazonaws.com/images/question9/savage.png" },
+        { id: 'Power',  label: 'Power',  image: "https://lol-image-bucket.s3.ap-south-1.amazonaws.com/images/question9/power.png"  },
     ];
 
     const indexOfLastItem = currentPage * itemsPerPage;
@@ -61,7 +69,6 @@ const ChallengeContent = () => {
             let text = block.text;
             const inlineStyles = [];
 
-            // Collect all inline styles with their ranges
             block.inlineStyleRanges.forEach(style => {
                 inlineStyles.push({
                     start: style.offset,
@@ -70,10 +77,8 @@ const ChallengeContent = () => {
                 });
             });
 
-            // Sort by start position (descending) to apply styles from end to start
             inlineStyles.sort((a, b) => b.start - a.start);
 
-            // Apply styles
             inlineStyles.forEach(({ start, end, style }) => {
                 const before = text.slice(0, start);
                 const styled = text.slice(start, end);
@@ -103,7 +108,6 @@ const ChallengeContent = () => {
         const inlineStyles = [];
         let currentPos = 0;
 
-        // Parse HTML and extract text with tags
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = html;
 
@@ -116,29 +120,17 @@ const ChallengeContent = () => {
                 const startPos = currentPos;
                 node.childNodes.forEach(processNode);
                 const endPos = currentPos;
-                inlineStyles.push({
-                    offset: startPos,
-                    length: endPos - startPos,
-                    style: 'BOLD'
-                });
+                inlineStyles.push({ offset: startPos, length: endPos - startPos, style: 'BOLD' });
             } else if (node.nodeName === 'I' || node.nodeName === 'EM') {
                 const startPos = currentPos;
                 node.childNodes.forEach(processNode);
                 const endPos = currentPos;
-                inlineStyles.push({
-                    offset: startPos,
-                    length: endPos - startPos,
-                    style: 'ITALIC'
-                });
+                inlineStyles.push({ offset: startPos, length: endPos - startPos, style: 'ITALIC' });
             } else if (node.nodeName === 'U') {
                 const startPos = currentPos;
                 node.childNodes.forEach(processNode);
                 const endPos = currentPos;
-                inlineStyles.push({
-                    offset: startPos,
-                    length: endPos - startPos,
-                    style: 'UNDERLINE'
-                });
+                inlineStyles.push({ offset: startPos, length: endPos - startPos, style: 'UNDERLINE' });
             } else {
                 node.childNodes.forEach(processNode);
             }
@@ -156,15 +148,10 @@ const ChallengeContent = () => {
             data: {}
         });
 
-        const contentState = convertFromRaw({
-            blocks: blocks,
-            entityMap: {}
-        });
-
+        const contentState = convertFromRaw({ blocks, entityMap: {} });
         return EditorState.createWithContent(contentState);
     };
 
-    // Render content with HTML (for display in table)
     const renderHTMLContent = (htmlContent) => {
         return <span dangerouslySetInnerHTML={{ __html: htmlContent }} />;
     };
@@ -190,9 +177,6 @@ const ChallengeContent = () => {
         toast.info("All filters cleared");
     };
 
-
-
-
     const handleBoldToggle = () => {
         setEditorState(RichUtils.toggleInlineStyle(editorState, 'BOLD'));
     };
@@ -207,7 +191,6 @@ const ChallengeContent = () => {
 
     const handleEditorStateChange = (state) => {
         setEditorState(state);
-
         if (errors.description) {
             setErrors(prev => {
                 const newErrors = { ...prev };
@@ -217,35 +200,17 @@ const ChallengeContent = () => {
         }
     };
 
-    // ADD THIS NEW FUNCTION
     const handleBeforeInputWithStyleClear = (chars, editorState) => {
         const currentText = editorState.getCurrentContent().getPlainText();
-        const currentLength = [...currentText].length; // Use spread operator
+        const currentLength = [...currentText].length;
 
-        // Check character limit
-        if (currentLength >= 150) {
-            return 'handled';
-        }
+        if (currentLength >= 150) return 'handled';
 
-        // If space is pressed, remove all inline styles
         if (chars === ' ') {
             const contentState = editorState.getCurrentContent();
             const selection = editorState.getSelection();
-
-            // Insert space without any styles
-            const newContentState = Modifier.replaceText(
-                contentState,
-                selection,
-                ' ',
-                null // This clears all inline styles
-            );
-
-            const newEditorState = EditorState.push(
-                editorState,
-                newContentState,
-                'insert-characters'
-            );
-
+            const newContentState = Modifier.replaceText(contentState, selection, ' ', null);
+            const newEditorState = EditorState.push(editorState, newContentState, 'insert-characters');
             setEditorState(newEditorState);
             return 'handled';
         }
@@ -254,56 +219,33 @@ const ChallengeContent = () => {
     };
 
     const sanitizeEmojiPlaceholders = (text) => {
-        return text.replace(/:[a-z_]+:/g, (match) => {
-            return match;
-        });
+        return text.replace(/:[a-z_]+:/g, (match) => match);
     };
 
     const handleBeforeInput = (chars, editorState) => {
         const currentText = editorState.getCurrentContent().getPlainText();
-        const currentLength = [...currentText].length; // Use spread operator
-
-        if (currentLength >= 150) {
-            return 'handled';  // stops further typing
-        }
+        const currentLength = [...currentText].length;
+        if (currentLength >= 150) return 'handled';
         return 'not-handled';
     };
 
     const handlePastedText = (text, html, editorState) => {
         const sanitizedText = sanitizeEmojiPlaceholders(text);
-
         const contentState = editorState.getCurrentContent();
         const selection = editorState.getSelection();
         const currentText = contentState.getPlainText();
-
-        const currentLength = [...currentText].length; // Use spread operator
+        const currentLength = [...currentText].length;
         const availableChars = 150 - currentLength;
 
-        // If no space left, block paste
-        if (availableChars <= 0) {
-            return 'handled';
-        }
+        if (availableChars <= 0) return 'handled';
 
-        // Trim using spread operator for accurate emoji counting
         const textArray = [...sanitizedText];
         const finalText = textArray.slice(0, availableChars).join('');
-
-        const newContentState = Modifier.replaceText(
-            contentState,
-            selection,
-            finalText
-        );
-
-        const newEditorState = EditorState.push(
-            editorState,
-            newContentState,
-            'insert-characters'
-        );
-
+        const newContentState = Modifier.replaceText(contentState, selection, finalText);
+        const newEditorState = EditorState.push(editorState, newContentState, 'insert-characters');
         setEditorState(newEditorState);
-        return 'handled'; // prevent default paste
+        return 'handled';
     };
-
 
     const validate = () => {
         const newErrors = {};
@@ -314,43 +256,22 @@ const ChallengeContent = () => {
 
     const handleEmojiSelect = (emoji) => {
         const contentState = editorState.getCurrentContent();
-
-        // Use saved selection or current selection
         const selection = savedSelection || editorState.getSelection();
 
-        // Insert emoji at the saved cursor position
-        const newContentState = Modifier.replaceText(
-            contentState,
-            selection,
-            emoji.emoji
-        );
+        const newContentState = Modifier.replaceText(contentState, selection, emoji.emoji);
+        const newEditorState = EditorState.push(editorState, newContentState, 'insert-characters');
 
-        // Create new editor state with the modified content
-        const newEditorState = EditorState.push(
-            editorState,
-            newContentState,
-            'insert-characters'
-        );
-
-        // Calculate new cursor position (after the emoji)
         const newSelection = selection.merge({
             anchorOffset: selection.getAnchorOffset() + emoji.emoji.length,
             focusOffset: selection.getFocusOffset() + emoji.emoji.length,
         });
 
-        // Force selection to the new position
         const finalEditorState = EditorState.forceSelection(newEditorState, newSelection);
-
         setEditorState(finalEditorState);
-
-        // Clear saved selection
         setSavedSelection(null);
 
-        // Keep emoji picker open and focus back to editor
         if (editorRef.current) {
-            setTimeout(() => {
-                editorRef.current.focus();
-            }, 0);
+            setTimeout(() => { editorRef.current.focus(); }, 0);
         }
     };
 
@@ -359,7 +280,8 @@ const ChallengeContent = () => {
         const payload = {
             page: page !== null ? page : currentPage,
             limit: itemsPerPage,
-            question: "challenge"
+            category: activeTab2 || undefined,
+            question: "bluff"
         };
 
         axios.post('https://api.lolcards.link/api/content/read', payload)
@@ -375,7 +297,6 @@ const ChallengeContent = () => {
                         getData(totalPages);
                     }
                 }
-                // Reset selection when data is refreshed
                 setSelectedItems([]);
                 setSelectAll(false);
                 setLoading(false);
@@ -393,15 +314,12 @@ const ChallengeContent = () => {
     }, [activeTab2]);
 
     useEffect(() => {
-        if (!loading) {
-            getData();
-        }
+        if (!loading) getData();
     }, [currentPage]);
 
     const handleSelectAll = () => {
         if (!selectAll) {
-            const allIds = currentItems.map(item => item._id);
-            setSelectedItems(allIds);
+            setSelectedItems(currentItems.map(item => item._id));
         } else {
             setSelectedItems([]);
         }
@@ -423,11 +341,7 @@ const ChallengeContent = () => {
 
     const handleDeleteSelected = () => {
         setIsDeleting(true);
-
-        const payload = {
-            ids: selectedItems,
-            TypeId: "12" // Use appropriate TypeId for Challenge content
-        };
+        const payload = { ids: selectedItems, TypeId: "19" };
 
         axios.post('https://api.lolcards.link/api/admin/deleteMultiple', payload)
             .then(() => {
@@ -446,7 +360,7 @@ const ChallengeContent = () => {
 
     const handleDelete = () => {
         axios
-            .delete(`https://api.lolcards.link/api/content/delete/${deleteModal.id}`, { data: { question: "challenge" } })
+            .delete(`https://api.lolcards.link/api/content/delete/${deleteModal.id}`, { data: { question: "bluff" } })
             .then((res) => {
                 if (currentItems.length === 1 && currentPage > 1) {
                     setCurrentPage(currentPage - 1);
@@ -467,26 +381,32 @@ const ChallengeContent = () => {
             if (mode === 'add') {
                 setId(undefined);
                 setEditorState(EditorState.createEmpty());
+                setCategory('');
+                setIsCategoryDropdownOpen(false);
             }
         } else {
             setEditorState(EditorState.createEmpty());
+            setCategory('');
+            setIsCategoryDropdownOpen(false);
         }
         setVisible(!visible);
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
         if (isSubmitting) return;
 
-        // Validate content from editor
+        if (!Category) {
+            toast.error('Please select a category');
+            return;
+        }
+
         const plainText = editorState.getCurrentContent().getPlainText().trim();
         if (!plainText) {
             toast.error('Content is required');
             return;
         }
 
-        // Check character limit
         if ([...plainText].length > 150) {
             toast.error('Content must not exceed 150 characters');
             return;
@@ -494,32 +414,20 @@ const ChallengeContent = () => {
 
         try {
             setIsSubmitting(true);
-            // Convert content to HTML for storage
             const htmlContent = convertContentToHTML(editorState.getCurrentContent());
-
-
-            const payload = {
-                Content: htmlContent,
-            question: "challenge"
-            };
+            const payload = { Content: htmlContent, Category: Category, question: "bluff" };
 
             if (id) {
-                await axios.patch(
-                    `https://api.lolcards.link/api/content/update/${id}`,
-                    payload
-                );
+                await axios.patch(`https://api.lolcards.link/api/content/update/${id}`, payload);
             } else {
-                await axios.post(
-                    'https://api.lolcards.link/api/content/create',
-                    payload
-                );
+                await axios.post('https://api.lolcards.link/api/content/create', payload);
             }
 
             setEditorState(EditorState.createEmpty());
+            setCategory('');
             setId(undefined);
             setVisible(false);
             getData(currentPage);
-
         } catch (err) {
             console.error(err);
         } finally {
@@ -530,7 +438,9 @@ const ChallengeContent = () => {
     const handleEdit = (content) => {
         const newEditorState = convertHTMLToContent(content.Content || '');
         setEditorState(newEditorState);
+        setCategory(content.Category || '');
         setId(content._id);
+        setIsCategoryDropdownOpen(false);
         setVisible(true);
     };
 
@@ -551,52 +461,43 @@ const ChallengeContent = () => {
 
     useEffect(() => {
         const handleClickOutside = (event) => {
-            if (
-                dropdownRef.current && !dropdownRef.current.contains(event.target)
-            ) {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
                 setIsAccessOpen(false);
             }
-
             if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target)) {
                 setShowEmojiPicker(false);
-                setSavedSelection(null); // Clear saved selection when closing picker
+                setSavedSelection(null);
+            }
+            // Close form category dropdown when clicking outside
+            if (isCategoryDropdownOpen && !event.target.closest('.category-form-dropdown')) {
+                setIsCategoryDropdownOpen(false);
             }
         };
 
-        if (isAccessOpen || showEmojiPicker) {
+        if (isAccessOpen || showEmojiPicker || isCategoryDropdownOpen) {
             document.addEventListener("mousedown", handleClickOutside);
         }
 
         return () => {
             document.removeEventListener("mousedown", handleClickOutside);
         };
-    }, [isAccessOpen, showEmojiPicker]);
+    }, [isAccessOpen, showEmojiPicker, isCategoryDropdownOpen]);
 
     const handleCopyToClipboard = (content) => {
         if (content?.Content) {
-            // Strip HTML tags for plain text copy
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = content.Content;
             const plainText = tempDiv.textContent || tempDiv.innerText || '';
-
             navigator.clipboard.writeText(plainText)
-                .then(() => {
-                    toast.success("Content copied to clipboard!");
-                })
-                .catch((error) => {
-                    console.error("Failed to copy: ", error);
-                });
+                .then(() => toast.success("Content copied to clipboard!"))
+                .catch((error) => console.error("Failed to copy: ", error));
         } else {
-            // alert("No Content to copy!");
             toast.error("No Content to copy!");
         }
     };
 
-    const toolbarOptions = {
-        options: [],
-    };
+    const toolbarOptions = { options: [] };
 
-    // Check if current selection has bold style
     const currentStyle = editorState.getCurrentInlineStyle();
     const isBold = currentStyle.has('BOLD');
     const isItalic = currentStyle.has('ITALIC');
@@ -612,11 +513,11 @@ const ChallengeContent = () => {
 
     return (
         <div>
-            <PageBreadcrumb pageTitle="Challenge Content" />
+            <PageBreadcrumb pageTitle="Bluff Content" />
 
             <div className="space-y-6 sticky left-0">
                 <div
-                    className={`rounded-2xl overflow-auto border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]`}
+                    className="rounded-2xl overflow-auto border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]"
                     style={{ minHeight: "600px" }}
                 >
                     <div className="px-6 pt-5">
@@ -654,6 +555,51 @@ const ChallengeContent = () => {
                             </div>
 
                             <div className="flex gap-3">
+                                {/* ── Filter dropdown (with images) ── */}
+                                <div className="relative inline-block w-64" ref={dropdownRef}>
+                                    <button
+                                        className="w-full flex items-center justify-between px-4 py-2 bg-white dark:border-gray-800 border rounded-md text-gray-600 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-300"
+                                        onClick={() => setIsAccessOpen(!isAccessOpen)}
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            {activeTab2 ? (
+                                                <>
+                                                    <img
+                                                        src={accessTypes.find(t => t.id === activeTab2)?.image}
+                                                        alt={activeTab2}
+                                                        className="w-5 h-5 object-contain"
+                                                    />
+                                                    <span>{activeTab2}</span>
+                                                </>
+                                            ) : (
+                                                <span>All Categories</span>
+                                            )}
+                                        </div>
+                                        <FontAwesomeIcon icon={faChevronDown} />
+                                    </button>
+
+                                    {isAccessOpen && (
+                                        <div className="absolute w-full mt-2 bg-white shadow-lg rounded-lg border dark:bg-gray-800 z-50 px-1">
+                                            <button
+                                                onClick={() => { setActiveTab2(''); setIsAccessOpen(false); }}
+                                                className={`flex items-center w-full px-4 py-2 my-1 text-left text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/10 rounded-md ${activeTab2 === "" ? "bg-gray-100 dark:bg-white/10" : ""}`}
+                                            >
+                                                All Categories
+                                            </button>
+                                            {accessTypes.map((type) => (
+                                                <button
+                                                    key={type.id}
+                                                    onClick={() => { setActiveTab2(type.id); setIsAccessOpen(false); }}
+                                                    className={`flex items-center w-full px-4 py-2 my-1 text-left text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/10 rounded-md ${activeTab2 === type.id ? "bg-gray-100 dark:bg-white/10" : ""}`}
+                                                >
+                                                    <img src={type.image} alt={type.label} className="w-6 h-6 mr-2 object-contain" />
+                                                    {type.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
                                 <Button
                                     onClick={() => toggleModal('add')}
                                     className="rounded-md border-0 shadow-md px-4 py-2 text-white"
@@ -667,7 +613,6 @@ const ChallengeContent = () => {
 
                     <div className="p-4 border-gray-100 dark:border-gray-800 sm:p-6 overflow-auto">
                         <div className="space-y-6 rounded-lg xl:border dark:border-gray-800">
-
                             <Table>
                                 <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
                                     <TableRow>
@@ -682,7 +627,8 @@ const ChallengeContent = () => {
                                             </div>
                                         </TableCell>
                                         <TableCell isHeader className="py-4 font-medium text-gray-500 px-2 border-r border-gray-200 dark:border-gray-700">Index</TableCell>
-                                        <TableCell isHeader className="py-7 font-medium text-gray-500 px-2 border-r border-gray-200 dark:border-gray-700">Challenge Content</TableCell>
+                                        <TableCell isHeader className="py-7 font-medium text-gray-500 px-2 border-r border-gray-200 dark:border-gray-700">Bluff Content</TableCell>
+                                        <TableCell isHeader className="py-7 font-medium text-gray-500 px-2 border-r border-gray-200 dark:border-gray-700">Category</TableCell>
                                         <TableCell isHeader className="py-7 font-medium text-gray-500 px-2 border-r border-gray-200 dark:border-gray-700">Actions</TableCell>
                                     </TableRow>
                                 </TableHeader>
@@ -706,27 +652,33 @@ const ChallengeContent = () => {
                                                     {indexOfFirstItem + index + 1}
                                                 </TableCell>
 
-                                                <TableCell
-                                                    className="py-3 px-2 border-r border-gray-200 
-             dark:border-gray-700 dark:text-gray-400 
-             w-[650px] max-w-[650px]"
-                                                >
-                                                    <div className="flex items-center gap-4">
-
-                                                        <div className="flex-1 min-w-0 break-words whitespace-normal">
-                                                            {renderHTMLContent(content.Content)}
-                                                        </div>
-
-                                                        <button
-                                                            className="text-gray-600 hover:text-gray-800 flex-shrink-0"
-                                                            onClick={() => handleCopyToClipboard(content)}
-                                                        >
-                                                            <FontAwesomeIcon icon={faCopy} />
-                                                        </button>
-
-                                                    </div>
+                                                <TableCell className="py-3 px-2 border-r border-gray-200 dark:border-gray-700 dark:text-gray-400 flex items-center justify-center gap-4">
+                                                    {renderHTMLContent(content.Content)}
+                                                    <button
+                                                        className="text-gray-600 hover:text-gray-800"
+                                                        onClick={() => handleCopyToClipboard(content)}
+                                                    >
+                                                        <FontAwesomeIcon icon={faCopy} />
+                                                    </button>
                                                 </TableCell>
 
+                                                {/* ── Category cell with image ── */}
+                                                <TableCell className="py-3 px-2 border-r border-gray-200 dark:border-gray-700 dark:text-gray-400">
+                                                    <div className="flex items-center justify-center gap-2">
+                                                        {content.Category && accessTypes.find(t => t.id === content.Category) ? (
+                                                            <>
+                                                                <img
+                                                                    src={accessTypes.find(t => t.id === content.Category)?.image}
+                                                                    alt={content.Category}
+                                                                    className="w-6 h-6 object-contain"
+                                                                />
+                                                                <span>{content.Category}</span>
+                                                            </>
+                                                        ) : (
+                                                            <span>{content.Category || 'N/A'}</span>
+                                                        )}
+                                                    </div>
+                                                </TableCell>
 
                                                 <TableCell className="py-3 px-2 border-r border-gray-200 dark:border-gray-700">
                                                     <div className="flex align-middle justify-center gap-4 h-full">
@@ -747,13 +699,10 @@ const ChallengeContent = () => {
                                     )}
                                 </TableBody>
                             </Table>
-
-
                         </div>
                     </div>
                 </div>
             </div>
-
 
             <CustomPagination
                 currentPage={currentPage}
@@ -768,8 +717,7 @@ const ChallengeContent = () => {
                 totalItems={pagination ? pagination.total : filteredData.length}
             />
 
-
-
+            {/* ── Add / Edit modal ── */}
             {visible && (
                 <div className="fixed inset-0 z-[99999] flex items-center justify-center">
                     <div className="fixed inset-0 bg-black bg-opacity-50" onClick={() => !isSubmitting && toggleModal('add')}></div>
@@ -784,6 +732,70 @@ const ChallengeContent = () => {
                             <form onSubmit={handleSubmit}>
                                 <div className="py-2">
 
+                                    {/* ── Category dropdown with images (matches BluffCardBg style) ── */}
+                                    <div className="py-2 mb-8">
+                                        <label className="block font-medium mb-2">
+                                            Category
+                                            <span className="text-red-500 pl-2 font-normal text-lg">*</span>
+                                        </label>
+
+                                        <div className="relative category-form-dropdown">
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
+                                                disabled={isSubmitting}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white text-left flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed"
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    {Category ? (
+                                                        <>
+                                                            <img
+                                                                src={accessTypes.find(t => t.id === Category)?.image}
+                                                                alt={Category}
+                                                                className="w-6 h-6 object-contain"
+                                                            />
+                                                            <span className="text-gray-700">
+                                                                {accessTypes.find(t => t.id === Category)?.label}
+                                                            </span>
+                                                        </>
+                                                    ) : (
+                                                        <span className="text-gray-400">Select Category</span>
+                                                    )}
+                                                </div>
+                                                <FontAwesomeIcon
+                                                    icon={faChevronDown}
+                                                    className={`text-gray-400 transition-transform ${isCategoryDropdownOpen ? 'rotate-180' : ''}`}
+                                                />
+                                            </button>
+
+                                            {isCategoryDropdownOpen && (
+                                                <div className="absolute w-full mt-2 bg-white shadow-lg rounded-lg border border-gray-300 z-50 max-h-60 overflow-y-auto">
+                                                    {accessTypes.map((cat) => (
+                                                        <button
+                                                            key={cat.id}
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setCategory(cat.id);
+                                                                setIsCategoryDropdownOpen(false);
+                                                            }}
+                                                            className={`flex items-center w-full px-4 py-3 text-left hover:bg-gray-100 transition-colors ${Category === cat.id ? 'bg-purple-50 border-l-4 border-purple-500' : ''}`}
+                                                        >
+                                                            <img
+                                                                src={cat.image}
+                                                                alt={cat.label}
+                                                                className="w-8 h-8 object-contain mr-3"
+                                                            />
+                                                            <span className={`font-medium ${Category === cat.id ? 'text-purple-700' : 'text-gray-700'}`}>
+                                                                {cat.label}
+                                                            </span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* ── Rich text editor (unchanged) ── */}
                                     <div className="mb-4 relative">
                                         <label className="block font-medium mb-2">
                                             Content
@@ -797,7 +809,6 @@ const ChallengeContent = () => {
                                             className={`relative border rounded ${errors.content ? 'border-red-500' : 'border-gray-300'}`}
                                             ref={editorRef}
                                         >
-                                            {/* Custom Bold Button */}
                                             <div className="border-b border-gray-300 p-2 bg-gray-50 flex gap-2">
                                                 <button
                                                     type="button"
@@ -840,7 +851,6 @@ const ChallengeContent = () => {
                                                 handlePastedText={(text, html) => handlePastedText(text, html, editorState)}
                                             />
 
-
                                             <div className="border-t border-gray-300 p-2 flex justify-between items-center">
                                                 <span className={`text-sm ${[...editorState.getCurrentContent().getPlainText()].length > 150 ? 'text-red-500' : 'text-gray-500'}`}>
                                                     {[...editorState.getCurrentContent().getPlainText()].length}/150
@@ -862,14 +872,10 @@ const ChallengeContent = () => {
                                                 <div
                                                     ref={emojiPickerRef}
                                                     className="absolute bottom-0 right-0 bg-white shadow-lg rounded-lg z-50"
-                                                    onMouseDown={(e) => {
-                                                        e.preventDefault();
-                                                    }}
+                                                    onMouseDown={(e) => e.preventDefault()}
                                                 >
                                                     <EmojiPicker
-                                                        onEmojiClick={(emoji) => {
-                                                            handleEmojiSelect(emoji);
-                                                        }}
+                                                        onEmojiClick={(emoji) => handleEmojiSelect(emoji)}
                                                         width={300}
                                                         height={400}
                                                         previewConfig={{ showPreview: false }}
@@ -914,17 +920,18 @@ const ChallengeContent = () => {
                 </div>
             )}
 
+            {/* ── Delete confirmation modal ── */}
             {deleteModal.isOpen && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[99999]">
                     <div className="bg-white rounded-lg p-6 w-full max-w-sm mx-4 shadow-lg">
                         <h2 className="text-xl font-semibold text-gray-800 mb-3">
-                            {deleteModal.isBulk ? 'Delete Selected Items' : 'Delete Challenge Content'}
+                            {deleteModal.isBulk ? 'Delete Selected Items' : 'Delete Bluff Content'}
                         </h2>
 
                         <p className="text-gray-700 mb-6">
                             {deleteModal.isBulk
                                 ? `Are you sure you want to delete ${selectedItems.length} selected items?`
-                                : 'Are you sure you want to delete this Challenge Content?'
+                                : 'Are you sure you want to delete this Bluff Content?'
                             }
                         </p>
 
@@ -936,7 +943,6 @@ const ChallengeContent = () => {
                             >
                                 Cancel
                             </button>
-
                             <button
                                 onClick={deleteModal.isBulk ? handleDeleteSelected : handleDelete}
                                 disabled={isDeleting}
@@ -954,4 +960,4 @@ const ChallengeContent = () => {
     );
 };
 
-export default ChallengeContent;
+export default BluffContent;

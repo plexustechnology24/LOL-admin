@@ -187,9 +187,10 @@ const HintContent = () => {
         const payload = {
             page: page !== null ? page : currentPage,
             limit: itemsPerPage,
+            question: "hint"
         };
 
-        axios.post('https://api.lolcards.link/api/hintcontent/read', payload)
+        axios.post('https://api.lolcards.link/api/content/read', payload)
             .then((res) => {
                 setData(res.data.data);
                 setPagination(res.data.pagination);
@@ -273,7 +274,7 @@ const HintContent = () => {
 
     const handleDelete = () => {
         axios
-            .delete(`https://api.lolcards.link/api/hintcontent/delete/${deleteModal.id}`)
+            .delete(`https://api.lolcards.link/api/content/delete/${deleteModal.id}`, { data: { question: "hint" } })
             .then((res) => {
                 if (currentItems.length === 1 && currentPage > 1) {
                     setCurrentPage(currentPage - 1);
@@ -323,17 +324,18 @@ const HintContent = () => {
             setIsSubmitting(true);
 
             const payload = {
-                Content: plainText
+                Content: plainText,
+                question: "hint"
             };
 
             if (id) {
                 await axios.patch(
-                    `https://api.lolcards.link/api/hintcontent/update/${id}`,
+                    `https://api.lolcards.link/api/content/update/${id}`,
                     payload
                 );
             } else {
                 await axios.post(
-                    'https://api.lolcards.link/api/hintcontent/create',
+                    'https://api.lolcards.link/api/content/create',
                     payload
                 );
             }

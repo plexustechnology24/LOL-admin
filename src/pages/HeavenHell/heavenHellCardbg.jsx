@@ -1047,6 +1047,7 @@ const HeavenHellCardBg = () => {
                 totalImages={pagination ? pagination.total : filteredData.length}
                 currentPage={currentPage}
                 itemsPerPage={itemsPerPage}
+                type={"11"}
             />
         </div>
     );

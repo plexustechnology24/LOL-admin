@@ -14,7 +14,7 @@ import EmojiPicker from 'emoji-picker-react';
 import { EditorState, Modifier, convertToRaw, convertFromRaw, RichUtils } from 'draft-js';
 
 
-const EmotionContent = () => {
+const HotnessContent = () => {
     const [visible, setVisible] = useState(false);
     const [data, setData] = useState([]);
     const [pagination, setPagination] = useState([]);
@@ -25,35 +25,72 @@ const EmotionContent = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(15);
     const [Category, setCategory] = useState('');
+    const [CategoryId, setCategoryId] = useState('');          // NEW: track categoryId
     const [deleteModal, setDeleteModal] = useState({ isOpen: false, id: null, isBulk: false });
     const [selectedItems, setSelectedItems] = useState([]);
     const [selectAll, setSelectAll] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
 
+    // NEW: dynamic categories from API
+    const [allCategories, setAllCategories] = useState([]);
+    const [categoriesLoading, setCategoriesLoading] = useState(true);
+
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [editorState, setEditorState] = useState(EditorState.createEmpty());
-    const [savedSelection, setSavedSelection] = useState(null); // NEW: Save cursor position
+    const [savedSelection, setSavedSelection] = useState(null);
     const [errors, setErrors] = useState({});
     const emojiPickerRef = useRef(null);
     const editorRef = useRef(null);
     const dropdownRef = useRef(null);
 
+    // Filter dropdown
     const [isAccessOpen, setIsAccessOpen] = useState(false);
     const [activeTab2, setActiveTab2] = useState('');
 
-    const accessTypes = [
-        { id: 'Angry', label: 'Angry' },
-        { id: 'Happy', label: 'Happy' },
-        { id: 'Love', label: 'Love' },
-        { id: 'Sad', label: 'Sad' }
-    ];
+    // Form category dropdown
+    const [isFormCategoryOpen, setIsFormCategoryOpen] = useState(false);
+    const formCategoryDropdownRef = useRef(null);
 
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
     const currentItems = filteredData;
 
 
-    // Convert Draft.js content to HTML for storage
+    // ─── Fetch categories from HotnessCategory API ────────────────────────────
+    const fetchCategories = useCallback(() => {
+        setCategoriesLoading(true);
+        axios.post('https://api.lolcards.link/api/hotness/category/read', { page: 1, limit: 100 })
+            .then((res) => {
+                if (res.data.allCategories) {
+                    setAllCategories(res.data.allCategories);
+                }
+            })
+            .catch((err) => {
+                console.error('Failed to fetch categories', err);
+                toast.error("Failed to load categories");
+            })
+            .finally(() => setCategoriesLoading(false));
+    }, []);
+
+    useEffect(() => {
+        fetchCategories();
+    }, [fetchCategories]);
+
+    // Close form category dropdown on outside click
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (formCategoryDropdownRef.current && !formCategoryDropdownRef.current.contains(event.target)) {
+                setIsFormCategoryOpen(false);
+            }
+        };
+        if (isFormCategoryOpen) {
+            document.addEventListener("mousedown", handleClickOutside);
+        }
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [isFormCategoryOpen]);
+
+
+    // ─── Draft.js helpers ─────────────────────────────────────────────────────
     const convertContentToHTML = (contentState) => {
         const rawContent = convertToRaw(contentState);
         let html = '';
@@ -62,31 +99,20 @@ const EmotionContent = () => {
             let text = block.text;
             const inlineStyles = [];
 
-            // Collect all inline styles with their ranges
             block.inlineStyleRanges.forEach(style => {
-                inlineStyles.push({
-                    start: style.offset,
-                    end: style.offset + style.length,
-                    style: style.style
-                });
+                inlineStyles.push({ start: style.offset, end: style.offset + style.length, style: style.style });
             });
 
-            // Sort by start position (descending) to apply styles from end to start
             inlineStyles.sort((a, b) => b.start - a.start);
 
-            // Apply styles
             inlineStyles.forEach(({ start, end, style }) => {
                 const before = text.slice(0, start);
                 const styled = text.slice(start, end);
                 const after = text.slice(end);
 
-                if (style === 'BOLD') {
-                    text = before + '<b>' + styled + '</b>' + after;
-                } else if (style === 'ITALIC') {
-                    text = before + '<i>' + styled + '</i>' + after;
-                } else if (style === 'UNDERLINE') {
-                    text = before + '<u>' + styled + '</u>' + after;
-                }
+                if (style === 'BOLD')      text = before + '<b>' + styled + '</b>' + after;
+                else if (style === 'ITALIC')    text = before + '<i>' + styled + '</i>' + after;
+                else if (style === 'UNDERLINE') text = before + '<u>' + styled + '</u>' + after;
             });
 
             html += text;
@@ -95,7 +121,6 @@ const EmotionContent = () => {
         return html;
     };
 
-    // Convert HTML back to Draft.js content
     const convertHTMLToContent = (html) => {
         if (!html) return EditorState.createEmpty();
 
@@ -104,7 +129,6 @@ const EmotionContent = () => {
         const inlineStyles = [];
         let currentPos = 0;
 
-        // Parse HTML and extract text with tags
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = html;
 
@@ -116,30 +140,15 @@ const EmotionContent = () => {
             } else if (node.nodeName === 'B' || node.nodeName === 'STRONG') {
                 const startPos = currentPos;
                 node.childNodes.forEach(processNode);
-                const endPos = currentPos;
-                inlineStyles.push({
-                    offset: startPos,
-                    length: endPos - startPos,
-                    style: 'BOLD'
-                });
+                inlineStyles.push({ offset: startPos, length: currentPos - startPos, style: 'BOLD' });
             } else if (node.nodeName === 'I' || node.nodeName === 'EM') {
                 const startPos = currentPos;
                 node.childNodes.forEach(processNode);
-                const endPos = currentPos;
-                inlineStyles.push({
-                    offset: startPos,
-                    length: endPos - startPos,
-                    style: 'ITALIC'
-                });
+                inlineStyles.push({ offset: startPos, length: currentPos - startPos, style: 'ITALIC' });
             } else if (node.nodeName === 'U') {
                 const startPos = currentPos;
                 node.childNodes.forEach(processNode);
-                const endPos = currentPos;
-                inlineStyles.push({
-                    offset: startPos,
-                    length: endPos - startPos,
-                    style: 'UNDERLINE'
-                });
+                inlineStyles.push({ offset: startPos, length: currentPos - startPos, style: 'UNDERLINE' });
             } else {
                 node.childNodes.forEach(processNode);
             }
@@ -157,30 +166,23 @@ const EmotionContent = () => {
             data: {}
         });
 
-        const contentState = convertFromRaw({
-            blocks: blocks,
-            entityMap: {}
-        });
-
-        return EditorState.createWithContent(contentState);
+        return EditorState.createWithContent(
+            convertFromRaw({ blocks, entityMap: {} })
+        );
     };
 
-    // Render content with HTML (for display in table)
-    const renderHTMLContent = (htmlContent) => {
-        return <span dangerouslySetInnerHTML={{ __html: htmlContent }} />;
-    };
+    const renderHTMLContent = (htmlContent) => (
+        <span dangerouslySetInnerHTML={{ __html: htmlContent }} />
+    );
 
+
+    // ─── Delete helpers ───────────────────────────────────────────────────────
     const openDeleteModal = (id = null, isBulk = false) => {
-        if (isBulk && selectedItems.length === 0) {
-            toast.info("No items selected for deletion.");
-            return;
-        }
+        if (isBulk && selectedItems.length === 0) { toast.info("No items selected for deletion."); return; }
         setDeleteModal({ isOpen: true, id, isBulk });
     };
 
-    const closeDeleteModal = () => {
-        setDeleteModal({ isOpen: false, id: null, isBulk: false });
-    };
+    const closeDeleteModal = () => setDeleteModal({ isOpen: false, id: null, isBulk: false });
 
     const clearAllFilters = () => {
         setActiveTab2('');
@@ -192,176 +194,78 @@ const EmotionContent = () => {
     };
 
 
-
-
-    const handleBoldToggle = () => {
-        setEditorState(RichUtils.toggleInlineStyle(editorState, 'BOLD'));
-    };
-
-    const handleItalicToggle = () => {
-        setEditorState(RichUtils.toggleInlineStyle(editorState, 'ITALIC'));
-    };
-
-    const handleUnderlineToggle = () => {
-        setEditorState(RichUtils.toggleInlineStyle(editorState, 'UNDERLINE'));
-    };
+    // ─── Editor handlers ──────────────────────────────────────────────────────
+    const handleBoldToggle      = () => setEditorState(RichUtils.toggleInlineStyle(editorState, 'BOLD'));
+    const handleItalicToggle    = () => setEditorState(RichUtils.toggleInlineStyle(editorState, 'ITALIC'));
+    const handleUnderlineToggle = () => setEditorState(RichUtils.toggleInlineStyle(editorState, 'UNDERLINE'));
 
     const handleEditorStateChange = (state) => {
         setEditorState(state);
-
         if (errors.description) {
-            setErrors(prev => {
-                const newErrors = { ...prev };
-                delete newErrors.description;
-                return newErrors;
-            });
+            setErrors(prev => { const e = { ...prev }; delete e.description; return e; });
         }
     };
 
-    // ADD THIS NEW FUNCTION
     const handleBeforeInputWithStyleClear = (chars, editorState) => {
-        const currentText = editorState.getCurrentContent().getPlainText();
-        const currentLength = [...currentText].length; // Use spread operator
+        const currentLength = [...editorState.getCurrentContent().getPlainText()].length;
+        if (currentLength >= 100) return 'handled';
 
-        // Check character limit
-        if (currentLength >= 150) {
-            return 'handled';
-        }
-
-        // If space is pressed, remove all inline styles
         if (chars === ' ') {
-            const contentState = editorState.getCurrentContent();
-            const selection = editorState.getSelection();
-
-            // Insert space without any styles
             const newContentState = Modifier.replaceText(
-                contentState,
-                selection,
+                editorState.getCurrentContent(),
+                editorState.getSelection(),
                 ' ',
-                null // This clears all inline styles
+                null
             );
-
-            const newEditorState = EditorState.push(
-                editorState,
-                newContentState,
-                'insert-characters'
-            );
-
-            setEditorState(newEditorState);
+            setEditorState(EditorState.push(editorState, newContentState, 'insert-characters'));
             return 'handled';
         }
-
         return 'not-handled';
     };
 
-    const sanitizeEmojiPlaceholders = (text) => {
-        return text.replace(/:[a-z_]+:/g, (match) => {
-            return match;
-        });
-    };
-
-    const handleBeforeInput = (chars, editorState) => {
-        const currentText = editorState.getCurrentContent().getPlainText();
-        const currentLength = [...currentText].length; // Use spread operator
-
-        if (currentLength >= 150) {
-            return 'handled';  // stops further typing
-        }
-        return 'not-handled';
-    };
+    const sanitizeEmojiPlaceholders = (text) => text.replace(/:[a-z_]+:/g, match => match);
 
     const handlePastedText = (text, html, editorState) => {
         const sanitizedText = sanitizeEmojiPlaceholders(text);
+        const contentState   = editorState.getCurrentContent();
+        const selection      = editorState.getSelection();
+        const currentLength  = [...contentState.getPlainText()].length;
+        const available      = 100 - currentLength;
 
-        const contentState = editorState.getCurrentContent();
-        const selection = editorState.getSelection();
-        const currentText = contentState.getPlainText();
+        if (available <= 0) return 'handled';
 
-        const currentLength = [...currentText].length; // Use spread operator
-        const availableChars = 150 - currentLength;
-
-        // If no space left, block paste
-        if (availableChars <= 0) {
-            return 'handled';
-        }
-
-        // Trim using spread operator for accurate emoji counting
-        const textArray = [...sanitizedText];
-        const finalText = textArray.slice(0, availableChars).join('');
-
-        const newContentState = Modifier.replaceText(
-            contentState,
-            selection,
-            finalText
-        );
-
-        const newEditorState = EditorState.push(
-            editorState,
-            newContentState,
-            'insert-characters'
-        );
-
-        setEditorState(newEditorState);
-        return 'handled'; // prevent default paste
-    };
-
-
-    const validate = () => {
-        const newErrors = {};
-        const plainText = editorState.getCurrentContent().getPlainText().trim();
-        if (!plainText) newErrors.description = 'Notification Description is required';
-        return newErrors;
+        const finalText = [...sanitizedText].slice(0, available).join('');
+        const newContentState = Modifier.replaceText(contentState, selection, finalText);
+        setEditorState(EditorState.push(editorState, newContentState, 'insert-characters'));
+        return 'handled';
     };
 
     const handleEmojiSelect = (emoji) => {
         const contentState = editorState.getCurrentContent();
+        const selection    = savedSelection || editorState.getSelection();
 
-        // Use saved selection or current selection
-        const selection = savedSelection || editorState.getSelection();
+        const newContentState = Modifier.replaceText(contentState, selection, emoji.emoji);
+        const newEditorState  = EditorState.push(editorState, newContentState, 'insert-characters');
 
-        // Insert emoji at the saved cursor position
-        const newContentState = Modifier.replaceText(
-            contentState,
-            selection,
-            emoji.emoji
-        );
-
-        // Create new editor state with the modified content
-        const newEditorState = EditorState.push(
-            editorState,
-            newContentState,
-            'insert-characters'
-        );
-
-        // Calculate new cursor position (after the emoji)
         const newSelection = selection.merge({
             anchorOffset: selection.getAnchorOffset() + emoji.emoji.length,
-            focusOffset: selection.getFocusOffset() + emoji.emoji.length,
+            focusOffset:  selection.getFocusOffset()  + emoji.emoji.length,
         });
 
-        // Force selection to the new position
-        const finalEditorState = EditorState.forceSelection(newEditorState, newSelection);
-
-        setEditorState(finalEditorState);
-
-        // Clear saved selection
+        setEditorState(EditorState.forceSelection(newEditorState, newSelection));
         setSavedSelection(null);
-
-        // Keep emoji picker open and focus back to editor
-        if (editorRef.current) {
-            setTimeout(() => {
-                editorRef.current.focus();
-            }, 0);
-        }
+        if (editorRef.current) setTimeout(() => editorRef.current.focus(), 0);
     };
 
+
+    // ─── Data fetching ────────────────────────────────────────────────────────
     const getData = useCallback((page = null) => {
         setLoading(true);
         const payload = {
-            page: page !== null ? page : currentPage,
-            limit: itemsPerPage,
+            page:     page !== null ? page : currentPage,
+            limit:    itemsPerPage,
             category: activeTab2 || undefined,
-            question: "emotion"
+            question: "hotness"
         };
 
         axios.post('https://api.lolcards.link/api/content/read', payload)
@@ -369,15 +273,15 @@ const EmotionContent = () => {
                 setData(res.data.data);
                 setPagination(res.data.pagination);
                 setFilteredData(res.data.data);
+
                 if (res.data.pagination) {
-                    const totalPages = res.data.pagination.totalPages;
+                    const totalPages    = res.data.pagination.totalPages;
                     const requestedPage = page !== null ? page : currentPage;
                     if (requestedPage > totalPages && totalPages > 0) {
                         setCurrentPage(totalPages);
                         getData(totalPages);
                     }
                 }
-                // Reset selection when data is refreshed
                 setSelectedItems([]);
                 setSelectAll(false);
                 setLoading(false);
@@ -389,229 +293,174 @@ const EmotionContent = () => {
             });
     }, [currentPage, itemsPerPage, activeTab2]);
 
-    useEffect(() => {
-        setCurrentPage(1);
-        getData(1);
-    }, [activeTab2]);
+    useEffect(() => { setCurrentPage(1); getData(1); }, [activeTab2]);
+    useEffect(() => { if (!loading) getData(); },           [currentPage]);
+    useEffect(() => { setCurrentPage(1); },                 []);
 
-    useEffect(() => {
-        if (!loading) {
-            getData();
-        }
-    }, [currentPage]);
 
+    // ─── Selection handlers ───────────────────────────────────────────────────
     const handleSelectAll = () => {
-        if (!selectAll) {
-            const allIds = currentItems.map(item => item._id);
-            setSelectedItems(allIds);
-        } else {
-            setSelectedItems([]);
-        }
+        if (!selectAll) setSelectedItems(currentItems.map(item => item._id));
+        else            setSelectedItems([]);
         setSelectAll(!selectAll);
     };
 
     const handleSelectItem = (id) => {
         if (selectedItems.includes(id)) {
-            setSelectedItems(selectedItems.filter(itemId => itemId !== id));
+            setSelectedItems(selectedItems.filter(i => i !== id));
             if (selectAll) setSelectAll(false);
         } else {
             setSelectedItems([...selectedItems, id]);
-            const allSelected = currentItems.every(item =>
-                selectedItems.includes(item._id) || item._id === id
-            );
+            const allSelected = currentItems.every(item => selectedItems.includes(item._id) || item._id === id);
             setSelectAll(allSelected);
         }
     };
 
+    useEffect(() => {
+        if (currentItems.length > 0 && selectedItems.length > 0) {
+            setSelectAll(currentItems.every(item => selectedItems.includes(item._id)));
+        } else {
+            setSelectAll(false);
+        }
+    }, [currentItems, selectedItems]);
+
+
+    // ─── Delete handlers ──────────────────────────────────────────────────────
     const handleDeleteSelected = () => {
         setIsDeleting(true);
-
-        const payload = {
-            ids: selectedItems,
-            TypeId: "3" // Use appropriate TypeId for emotion content
-        };
-
-        axios.post('https://api.lolcards.link/api/admin/deleteMultiple', payload)
+        axios.post('https://api.lolcards.link/api/admin/deleteMultiple', { ids: selectedItems, TypeId: "16" })
             .then(() => {
                 toast.success(`Successfully deleted ${selectedItems.length} items.`);
                 getData();
             })
-            .catch((err) => {
-                console.error(err);
-                toast.error("Failed to delete selected items. Please try again.");
-            })
-            .finally(() => {
-                setIsDeleting(false);
-                closeDeleteModal();
-            });
+            .catch((err) => { console.error(err); toast.error("Failed to delete selected items."); })
+            .finally(() => { setIsDeleting(false); closeDeleteModal(); });
     };
 
     const handleDelete = () => {
-        axios
-            .delete(`https://api.lolcards.link/api/content/delete/${deleteModal.id}`, { data: { question: "emotion" } })
+        axios.delete(`https://api.lolcards.link/api/content/delete/${deleteModal.id}`, { data: { question: "hotness" } })
             .then((res) => {
-                if (currentItems.length === 1 && currentPage > 1) {
-                    setCurrentPage(currentPage - 1);
-                } else {
-                    getData(currentPage);
-                }
+                if (currentItems.length === 1 && currentPage > 1) setCurrentPage(currentPage - 1);
+                else getData(currentPage);
                 closeDeleteModal();
                 toast.success(res.data.message);
             })
-            .catch((err) => {
-                console.error(err);
-                toast.error("An error occurred. Please try again.");
-            });
+            .catch((err) => { console.error(err); toast.error("An error occurred. Please try again."); });
     };
 
+
+    // ─── Modal helpers ────────────────────────────────────────────────────────
     const toggleModal = (mode) => {
         if (!visible) {
             if (mode === 'add') {
                 setId(undefined);
                 setEditorState(EditorState.createEmpty());
                 setCategory('');
+                setCategoryId('');
             }
         } else {
             setEditorState(EditorState.createEmpty());
             setCategory('');
+            setCategoryId('');
         }
         setVisible(!visible);
     };
 
+
+    // ─── Submit ───────────────────────────────────────────────────────────────
     const handleSubmit = async (e) => {
         e.preventDefault();
-
         if (isSubmitting) return;
 
-        if (!Category) {
-            toast.error('Please select a category');
-            return;
-        }
+        if (!Category) { toast.error('Please select a category'); return; }
 
-        // Validate content from editor
         const plainText = editorState.getCurrentContent().getPlainText().trim();
-        if (!plainText) {
-            toast.error('Content is required');
-            return;
-        }
-
-        // Check character limit
-        if ([...plainText].length > 150) {
-            toast.error('Content must not exceed 150 characters');
-            return;
-        }
+        if (!plainText)                            { toast.error('Content is required');                        return; }
+        if ([...plainText].length > 100)           { toast.error('Content must not exceed 100 characters');     return; }
 
         try {
             setIsSubmitting(true);
-            // Convert content to HTML for storage
             const htmlContent = convertContentToHTML(editorState.getCurrentContent());
 
-
             const payload = {
-                Content: htmlContent,
-                Category: Category,
-                question: "emotion"
+                Content:    htmlContent,
+                Category:   Category,
+                categoryId: CategoryId,   // ← pass categoryId
+                question:   "hotness"
             };
 
             if (id) {
-                await axios.patch(
-                    `https://api.lolcards.link/api/content/update/${id}`,
-                    payload
-                );
+                await axios.patch(`https://api.lolcards.link/api/content/update/${id}`, payload);
             } else {
-                await axios.post(
-                    'https://api.lolcards.link/api/content/create',
-                    payload
-                );
+                await axios.post('https://api.lolcards.link/api/content/create', payload);
             }
 
             setEditorState(EditorState.createEmpty());
             setCategory('');
+            setCategoryId('');
             setId(undefined);
             setVisible(false);
             getData(currentPage);
-
+            toast.success(id ? 'Content updated successfully' : 'Content created successfully');
         } catch (err) {
             console.error(err);
+            toast.error("An error occurred. Please try again.");
         } finally {
             setIsSubmitting(false);
         }
     };
 
+
+    // ─── Edit ─────────────────────────────────────────────────────────────────
     const handleEdit = (content) => {
         const newEditorState = convertHTMLToContent(content.Content || '');
         setEditorState(newEditorState);
         setCategory(content.Category || '');
+
+        // Resolve categoryId from allCategories by matching title
+        const matched = allCategories.find(c => c.title === content.Category);
+        setCategoryId(matched ? matched.categoryId : (content.categoryId || ''));
+
         setId(content._id);
         setVisible(true);
     };
 
-    useEffect(() => {
-        setCurrentPage(1);
-    }, []);
 
-    useEffect(() => {
-        if (currentItems.length > 0 && selectedItems.length > 0) {
-            const allCurrentItemsSelected = currentItems.every(item =>
-                selectedItems.includes(item._id)
-            );
-            setSelectAll(allCurrentItemsSelected);
-        } else {
-            setSelectAll(false);
-        }
-    }, [currentItems, selectedItems]);
-
+    // ─── Outside-click for filter & emoji ────────────────────────────────────
     useEffect(() => {
         const handleClickOutside = (event) => {
-            if (
-                dropdownRef.current && !dropdownRef.current.contains(event.target)
-            ) {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target))
                 setIsAccessOpen(false);
-            }
 
             if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target)) {
                 setShowEmojiPicker(false);
-                setSavedSelection(null); // Clear saved selection when closing picker
+                setSavedSelection(null);
             }
         };
-
-        if (isAccessOpen || showEmojiPicker) {
+        if (isAccessOpen || showEmojiPicker)
             document.addEventListener("mousedown", handleClickOutside);
-        }
-
-        return () => {
-            document.removeEventListener("mousedown", handleClickOutside);
-        };
+        return () => document.removeEventListener("mousedown", handleClickOutside);
     }, [isAccessOpen, showEmojiPicker]);
 
+
+    // ─── Copy ─────────────────────────────────────────────────────────────────
     const handleCopyToClipboard = (content) => {
         if (content?.Content) {
-            // Strip HTML tags for plain text copy
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = content.Content;
-            const plainText = tempDiv.textContent || tempDiv.innerText || '';
-
-            navigator.clipboard.writeText(plainText)
-                .then(() => {
-                    toast.success("Content copied to clipboard!");
-                })
-                .catch((error) => {
-                    console.error("Failed to copy: ", error);
-                });
+            navigator.clipboard.writeText(tempDiv.textContent || tempDiv.innerText || '')
+                .then(() => toast.success("Content copied to clipboard!"))
+                .catch(() => toast.error("Failed to copy."));
         } else {
-            // alert("No Content to copy!");
             toast.error("No Content to copy!");
         }
     };
 
-    const toolbarOptions = {
-        options: [],
-    };
+    const toolbarOptions = { options: [] };
 
-    // Check if current selection has bold style
     const currentStyle = editorState.getCurrentInlineStyle();
-    const isBold = currentStyle.has('BOLD');
-    const isItalic = currentStyle.has('ITALIC');
+    const isBold      = currentStyle.has('BOLD');
+    const isItalic    = currentStyle.has('ITALIC');
     const isUnderline = currentStyle.has('UNDERLINE');
 
     if (loading) return (
@@ -622,17 +471,25 @@ const EmotionContent = () => {
         </div>
     );
 
+    // Helper: find image for a category title
+    const getCategoryImage = (title) => {
+        const cat = allCategories.find(c => c.title === title);
+        return cat ? cat.image : null;
+    };
+
     return (
         <div>
-            <PageBreadcrumb pageTitle="Emotion Content" />
+            <PageBreadcrumb pageTitle="Hotness Content" />
 
             <div className="space-y-6 sticky left-0">
                 <div
-                    className={`rounded-2xl overflow-auto border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]`}
+                    className="rounded-2xl overflow-auto border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]"
                     style={{ minHeight: "600px" }}
                 >
                     <div className="px-6 pt-5">
                         <div className="flex justify-between items-center px-4 py-3 mt-4 gap-4">
+
+                            {/* Left: bulk-delete / clear */}
                             <div className="flex gap-4">
                                 {selectedItems.length > 0 && (
                                     <Button
@@ -643,7 +500,7 @@ const EmotionContent = () => {
                                         style={{ fontSize: "14px", color: "#f13838", border: "none" }}
                                     >
                                         {isDeleting ? (
-                                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                                         ) : (
                                             <>
                                                 <FontAwesomeIcon icon={faTrash} className="pe-3" />
@@ -652,7 +509,6 @@ const EmotionContent = () => {
                                         )}
                                     </Button>
                                 )}
-
                                 {selectedItems.length > 0 && (
                                     <Button
                                         onClick={clearAllFilters}
@@ -665,42 +521,59 @@ const EmotionContent = () => {
                                 )}
                             </div>
 
+                            {/* Right: filter dropdown + add button */}
                             <div className="flex gap-3">
-                                {/* Category Filter */}
-                                <div className="relative inline-block w-64">
+
+                                {/* ── Filter dropdown with images ── */}
+                                <div className="relative inline-block w-64" ref={dropdownRef}>
                                     <button
                                         className="w-full flex items-center justify-between px-4 py-2 bg-white dark:border-gray-800 border rounded-md text-gray-600 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-300"
                                         onClick={() => setIsAccessOpen(!isAccessOpen)}
                                     >
-                                        <div className="flex items-center">
+                                        <div className="flex items-center gap-2">
+                                            {activeTab2 && getCategoryImage(activeTab2) && (
+                                                <img
+                                                    src={getCategoryImage(activeTab2)}
+                                                    alt={activeTab2}
+                                                    className="w-5 h-5 rounded-full object-contain"
+                                                />
+                                            )}
                                             <span>{activeTab2 === '' ? 'All Categories' : activeTab2}</span>
                                         </div>
                                         <FontAwesomeIcon icon={faChevronDown} />
                                     </button>
 
                                     {isAccessOpen && (
-                                        <div className="absolute w-full mt-2 bg-white shadow-lg rounded-lg border dark:bg-gray-800 z-50 px-1">
+                                        <div className="absolute w-full h-[300px] overflow-auto mt-2 bg-white shadow-lg rounded-lg border dark:bg-gray-800 z-50 px-1">
+                                            {/* All Categories option */}
                                             <button
-                                                onClick={() => {
-                                                    setActiveTab2('');
-                                                    setIsAccessOpen(false);
-                                                }}
-                                                className={`flex items-center w-full px-4 py-2 my-1 text-left text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/10 rounded-md ${activeTab2 === "" ? "bg-gray-100 dark:bg-white/10" : ""}`}
+                                                onClick={() => { setActiveTab2(''); setIsAccessOpen(false); }}
+                                                className={`flex items-center w-full px-4 py-2 my-1 text-left text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/10 rounded-md ${activeTab2 === '' ? 'bg-gray-100 dark:bg-white/10' : ''}`}
                                             >
                                                 All Categories
                                             </button>
-                                            {accessTypes.map((type) => (
-                                                <button
-                                                    key={type.id}
-                                                    onClick={() => {
-                                                        setActiveTab2(type.id);
-                                                        setIsAccessOpen(false);
-                                                    }}
-                                                    className={`flex items-center w-full px-4 py-2 my-1 text-left text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/10 rounded-md ${activeTab2 === type.id ? "bg-gray-100 dark:bg-white/10" : ""}`}
-                                                >
-                                                    {type.label}
-                                                </button>
-                                            ))}
+
+                                            {/* Dynamic categories */}
+                                            {categoriesLoading ? (
+                                                <div className="px-4 py-2 text-sm text-gray-400">Loading…</div>
+                                            ) : (
+                                                allCategories.map((cat) => (
+                                                    <button
+                                                        key={cat.categoryId}
+                                                        onClick={() => { setActiveTab2(cat.title); setIsAccessOpen(false); }}
+                                                        className={`flex items-center gap-3 w-full px-4 py-2 my-1 text-left text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/10 rounded-md ${activeTab2 === cat.title ? 'bg-gray-100 dark:bg-white/10' : ''}`}
+                                                    >
+                                                        {cat.image && (
+                                                            <img
+                                                                src={cat.image}
+                                                                alt={cat.title}
+                                                                className="w-6 h-6 rounded-full object-contain flex-shrink-0"
+                                                            />
+                                                        )}
+                                                        <span>{cat.title}</span>
+                                                    </button>
+                                                ))
+                                            )}
                                         </div>
                                     )}
                                 </div>
@@ -716,24 +589,20 @@ const EmotionContent = () => {
                         </div>
                     </div>
 
+                    {/* Table */}
                     <div className="p-4 border-gray-100 dark:border-gray-800 sm:p-6 overflow-auto">
                         <div className="space-y-6 rounded-lg xl:border dark:border-gray-800">
-
                             <Table>
                                 <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
                                     <TableRow>
                                         <TableCell isHeader className="py-7 font-medium text-gray-500 px-2 border-r border-gray-200 dark:border-gray-700 w-10">
                                             <div className="flex items-center justify-center">
-                                                <input
-                                                    type="checkbox"
-                                                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                                                    checked={selectAll}
-                                                    onChange={handleSelectAll}
-                                                />
+                                                <input type="checkbox" className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                                    checked={selectAll} onChange={handleSelectAll} />
                                             </div>
                                         </TableCell>
                                         <TableCell isHeader className="py-4 font-medium text-gray-500 px-2 border-r border-gray-200 dark:border-gray-700">Index</TableCell>
-                                        <TableCell isHeader className="py-7 font-medium text-gray-500 px-2 border-r border-gray-200 dark:border-gray-700">Emotion Content</TableCell>
+                                        <TableCell isHeader className="py-7 font-medium text-gray-500 px-2 border-r border-gray-200 dark:border-gray-700">Hotness Content</TableCell>
                                         <TableCell isHeader className="py-7 font-medium text-gray-500 px-2 border-r border-gray-200 dark:border-gray-700">Category</TableCell>
                                         <TableCell isHeader className="py-7 font-medium text-gray-500 px-2 border-r border-gray-200 dark:border-gray-700">Actions</TableCell>
                                     </TableRow>
@@ -745,12 +614,9 @@ const EmotionContent = () => {
                                             <TableRow key={content._id}>
                                                 <TableCell className="py-3 px-2 border-r border-gray-200 dark:border-gray-700">
                                                     <div className="flex items-center justify-center">
-                                                        <input
-                                                            type="checkbox"
-                                                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                                        <input type="checkbox" className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                                                             checked={selectedItems.includes(content._id)}
-                                                            onChange={() => handleSelectItem(content._id)}
-                                                        />
+                                                            onChange={() => handleSelectItem(content._id)} />
                                                     </div>
                                                 </TableCell>
 
@@ -759,18 +625,24 @@ const EmotionContent = () => {
                                                 </TableCell>
 
                                                 <TableCell className="py-3 px-2 border-r border-gray-200 dark:border-gray-700 dark:text-gray-400 flex items-center justify-center gap-4">
-
                                                     {renderHTMLContent(content.Content)}
-                                                    <button
-                                                        className="text-gray-600 hover:text-gray-800"
-                                                        onClick={() => handleCopyToClipboard(content)}
-                                                    >
+                                                    <button className="text-gray-600 hover:text-gray-800" onClick={() => handleCopyToClipboard(content)}>
                                                         <FontAwesomeIcon icon={faCopy} />
                                                     </button>
                                                 </TableCell>
 
+                                                {/* Category cell – shows image + title */}
                                                 <TableCell className="py-3 px-2 border-r border-gray-200 dark:border-gray-700 dark:text-gray-400">
-                                                    {content.Category || 'N/A'}
+                                                    <div className="flex items-center justify-center gap-2">
+                                                        {getCategoryImage(content.Category) && (
+                                                            <img
+                                                                src={getCategoryImage(content.Category)}
+                                                                alt={content.Category}
+                                                                className="w-6 h-6 rounded-full object-contain"
+                                                            />
+                                                        )}
+                                                        <span>{content.Category || 'N/A'}</span>
+                                                    </div>
                                                 </TableCell>
 
                                                 <TableCell className="py-3 px-2 border-r border-gray-200 dark:border-gray-700">
@@ -792,13 +664,10 @@ const EmotionContent = () => {
                                     )}
                                 </TableBody>
                             </Table>
-
-
                         </div>
                     </div>
                 </div>
             </div>
-
 
             <CustomPagination
                 currentPage={currentPage}
@@ -814,80 +683,115 @@ const EmotionContent = () => {
             />
 
 
-
+            {/* ── Add / Edit modal ── */}
             {visible && (
                 <div className="fixed inset-0 z-[99999] flex items-center justify-center">
-                    <div className="fixed inset-0 bg-black bg-opacity-50" onClick={() => !isSubmitting && toggleModal('add')}></div>
+                    <div className="fixed inset-0 bg-black bg-opacity-50" onClick={() => !isSubmitting && toggleModal('add')} />
                     <div className="relative bg-white rounded-lg w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
                         <div className="px-6 py-4 border-b">
-                            <h3 className="text-xl font-semibold">
-                                {id ? "Edit Card Content" : "Add Card Content"}
-                            </h3>
+                            <h3 className="text-xl font-semibold">{id ? "Edit Card Content" : "Add Card Content"}</h3>
                         </div>
 
                         <div className="px-6 py-4">
                             <form onSubmit={handleSubmit}>
                                 <div className="py-2">
+
+                                    {/* ── Category custom dropdown with images ── */}
                                     <div className="py-2 mb-8">
                                         <label className="block font-medium mb-2">
                                             Category
                                             <span className="text-red-500 pl-2 font-normal text-lg">*</span>
                                         </label>
-                                        <select
-                                            value={Category}
-                                            onChange={(e) => setCategory(e.target.value)}
-                                            disabled={isSubmitting}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                            required
-                                        >
-                                            <option value="">Select Category</option>
-                                            <option value="Angry">Angry</option>
-                                            <option value="Happy">Happy</option>
-                                            <option value="Love">Love</option>
-                                            <option value="Sad">Sad</option>
-                                        </select>
+
+                                        <div className="relative" ref={formCategoryDropdownRef}>
+                                            {/* Trigger */}
+                                            <button
+                                                type="button"
+                                                disabled={isSubmitting || categoriesLoading}
+                                                onClick={() => setIsFormCategoryOpen(!isFormCategoryOpen)}
+                                                className="w-full flex items-center justify-between px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white"
+                                            >
+                                                {Category ? (
+                                                    <div className="flex items-center gap-2">
+                                                        {getCategoryImage(Category) && (
+                                                            <img
+                                                                src={getCategoryImage(Category)}
+                                                                alt={Category}
+                                                                className="w-6 h-6 rounded-full object-contain"
+                                                            />
+                                                        )}
+                                                        <span className="text-gray-700">{Category}</span>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-gray-400">
+                                                        {categoriesLoading ? 'Loading categories…' : 'Select Category'}
+                                                    </span>
+                                                )}
+                                                <FontAwesomeIcon icon={faChevronDown} className="text-gray-400 text-sm" />
+                                            </button>
+
+                                            {/* Dropdown options */}
+                                            {isFormCategoryOpen && (
+                                                <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-52 overflow-y-auto">
+                                                    {allCategories.length === 0 ? (
+                                                        <div className="px-4 py-3 text-sm text-gray-400">No categories found</div>
+                                                    ) : (
+                                                        allCategories.map((cat) => (
+                                                            <button
+                                                                key={cat.categoryId}
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setCategory(cat.title);
+                                                                    setCategoryId(cat.categoryId);
+                                                                    setIsFormCategoryOpen(false);
+                                                                }}
+                                                                className={`flex items-center gap-3 w-full px-4 py-2 text-left hover:bg-gray-50 transition-colors ${Category === cat.title ? 'bg-gray-100 font-medium' : ''}`}
+                                                            >
+                                                                {cat.image && (
+                                                                    <img
+                                                                        src={cat.image}
+                                                                        alt={cat.title}
+                                                                        className="w-7 h-7 rounded-full object-contain flex-shrink-0 border border-gray-200"
+                                                                    />
+                                                                )}
+                                                                <span className="text-gray-700">{cat.title}</span>
+                                                            </button>
+                                                        ))
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
 
+                                    {/* ── Content editor ── */}
                                     <div className="mb-4 relative">
                                         <label className="block font-medium mb-2">
                                             Content
                                             <span className="text-red-500 pl-2 font-normal text-lg">*</span>
                                         </label>
                                         <div className="bg-gray-100 p-2 mb-2 rounded text-sm">
-                                            <p>Type your message and emoji picker for emojis. (Max 150 characters)</p>
+                                            <p>Type your message and use the emoji picker for emojis. (Max 100 characters)</p>
                                         </div>
 
                                         <div
                                             className={`relative border rounded ${errors.content ? 'border-red-500' : 'border-gray-300'}`}
                                             ref={editorRef}
                                         >
-                                            {/* Custom Bold Button */}
+                                            {/* Formatting toolbar */}
                                             <div className="border-b border-gray-300 p-2 bg-gray-50 flex gap-2">
-                                                <button
-                                                    type="button"
-                                                    onClick={handleBoldToggle}
+                                                <button type="button" onClick={handleBoldToggle} disabled={isSubmitting}
                                                     className={`px-3 py-1 rounded ${isBold ? 'bg-[#fa4b56] text-white' : 'bg-gray-200 text-gray-700'} hover:bg-gray-400 transition-colors`}
-                                                    disabled={isSubmitting}
-                                                    title="Bold (Ctrl+B)"
-                                                >
+                                                    title="Bold (Ctrl+B)">
                                                     <FontAwesomeIcon icon={faBold} />
                                                 </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={handleItalicToggle}
+                                                <button type="button" onClick={handleItalicToggle} disabled={isSubmitting}
                                                     className={`px-3 py-1 rounded ${isItalic ? 'bg-[#fa4b56] text-white' : 'bg-gray-200 text-gray-700'} hover:bg-gray-400 transition-colors`}
-                                                    disabled={isSubmitting}
-                                                    title="Italic (Ctrl+I)"
-                                                >
+                                                    title="Italic (Ctrl+I)">
                                                     <FontAwesomeIcon icon={faItalic} />
                                                 </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={handleUnderlineToggle}
+                                                <button type="button" onClick={handleUnderlineToggle} disabled={isSubmitting}
                                                     className={`px-3 py-1 rounded ${isUnderline ? 'bg-[#fa4b56] text-white' : 'bg-gray-200 text-gray-700'} hover:bg-gray-400 transition-colors`}
-                                                    disabled={isSubmitting}
-                                                    title="Underline (Ctrl+U)"
-                                                >
+                                                    title="Underline (Ctrl+U)">
                                                     <FontAwesomeIcon icon={faUnderline} />
                                                 </button>
                                             </div>
@@ -904,10 +808,10 @@ const EmotionContent = () => {
                                                 handlePastedText={(text, html) => handlePastedText(text, html, editorState)}
                                             />
 
-
+                                            {/* Footer: char count + emoji */}
                                             <div className="border-t border-gray-300 p-2 flex justify-between items-center">
-                                                <span className={`text-sm ${[...editorState.getCurrentContent().getPlainText()].length > 150 ? 'text-red-500' : 'text-gray-500'}`}>
-                                                    {[...editorState.getCurrentContent().getPlainText()].length}/150
+                                                <span className={`text-sm ${[...editorState.getCurrentContent().getPlainText()].length > 100 ? 'text-red-500' : 'text-gray-500'}`}>
+                                                    {[...editorState.getCurrentContent().getPlainText()].length}/100
                                                 </span>
                                                 <button
                                                     type="button"
@@ -926,14 +830,10 @@ const EmotionContent = () => {
                                                 <div
                                                     ref={emojiPickerRef}
                                                     className="absolute bottom-0 right-0 bg-white shadow-lg rounded-lg z-50"
-                                                    onMouseDown={(e) => {
-                                                        e.preventDefault();
-                                                    }}
+                                                    onMouseDown={(e) => e.preventDefault()}
                                                 >
                                                     <EmojiPicker
-                                                        onEmojiClick={(emoji) => {
-                                                            handleEmojiSelect(emoji);
-                                                        }}
+                                                        onEmojiClick={handleEmojiSelect}
                                                         width={300}
                                                         height={400}
                                                         previewConfig={{ showPreview: false }}
@@ -950,6 +850,7 @@ const EmotionContent = () => {
                                     </div>
                                 </div>
 
+                                {/* Buttons */}
                                 <div className="flex gap-4 mt-4">
                                     <button
                                         type="button"
@@ -966,7 +867,7 @@ const EmotionContent = () => {
                                         style={{ backgroundColor: "#FA4B56" }}
                                     >
                                         {isSubmitting ? (
-                                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto"></div>
+                                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto" />
                                         ) : (
                                             id ? 'Update' : 'Submit'
                                         )}
@@ -978,34 +879,27 @@ const EmotionContent = () => {
                 </div>
             )}
 
+            {/* ── Delete confirmation modal ── */}
             {deleteModal.isOpen && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[99999]">
                     <div className="bg-white rounded-lg p-6 w-full max-w-sm mx-4 shadow-lg">
                         <h2 className="text-xl font-semibold text-gray-800 mb-3">
-                            {deleteModal.isBulk ? 'Delete Selected Items' : 'Delete Emotion Content'}
+                            {deleteModal.isBulk ? 'Delete Selected Items' : 'Delete Hotness Content'}
                         </h2>
-
                         <p className="text-gray-700 mb-6">
                             {deleteModal.isBulk
                                 ? `Are you sure you want to delete ${selectedItems.length} selected items?`
-                                : 'Are you sure you want to delete this Emotion Content?'
-                            }
+                                : 'Are you sure you want to delete this Hotness Content?'}
                         </p>
-
                         <div className="flex justify-end gap-3">
-                            <button
-                                onClick={closeDeleteModal}
-                                disabled={isDeleting}
-                                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 disabled:opacity-70"
-                            >
+                            <button onClick={closeDeleteModal} disabled={isDeleting}
+                                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 disabled:opacity-70">
                                 Cancel
                             </button>
-
                             <button
                                 onClick={deleteModal.isBulk ? handleDeleteSelected : handleDelete}
                                 disabled={isDeleting}
-                                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 disabled:opacity-70"
-                            >
+                                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 disabled:opacity-70">
                                 {isDeleting ? "Deleting..." : "Delete"}
                             </button>
                         </div>
@@ -1018,4 +912,4 @@ const EmotionContent = () => {
     );
 };
 
-export default EmotionContent;
+export default HotnessContent;

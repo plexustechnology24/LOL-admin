@@ -24,7 +24,6 @@ const HeavenHellContent = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(15);
-    const [Category, setCategory] = useState('');
     const [deleteModal, setDeleteModal] = useState({ isOpen: false, id: null, isBulk: false });
     const [selectedItems, setSelectedItems] = useState([]);
     const [selectAll, setSelectAll] = useState(false);
@@ -294,13 +293,6 @@ const HeavenHellContent = () => {
     };
 
 
-    const validate = () => {
-        const newErrors = {};
-        const plainText = editorState.getCurrentContent().getPlainText().trim();
-        if (!plainText) newErrors.description = 'Notification Description is required';
-        return newErrors;
-    };
-
     const handleEmojiSelect = (emoji) => {
         const contentState = editorState.getCurrentContent();
 
@@ -348,7 +340,7 @@ const HeavenHellContent = () => {
         const payload = {
             page: page !== null ? page : currentPage,
             limit: itemsPerPage,
-            category: activeTab2 || undefined
+            
         };
 
         axios.post('https://api.lolcards.link/api/heaven-hell/content/read', payload)
@@ -456,11 +448,9 @@ const HeavenHellContent = () => {
             if (mode === 'add') {
                 setId(undefined);
                 setEditorState(EditorState.createEmpty());
-                setCategory('');
             }
         } else {
             setEditorState(EditorState.createEmpty());
-            setCategory('');
         }
         setVisible(!visible);
     };
@@ -470,10 +460,6 @@ const HeavenHellContent = () => {
 
         if (isSubmitting) return;
 
-        if (!Category) {
-            toast.error('Please select a category');
-            return;
-        }
 
         // Validate content from editor
         const plainText = editorState.getCurrentContent().getPlainText().trim();
@@ -495,8 +481,7 @@ const HeavenHellContent = () => {
 
 
             const payload = {
-                Content: htmlContent,
-                Category: Category
+                Content: htmlContent
             };
 
             if (id) {
@@ -512,7 +497,6 @@ const HeavenHellContent = () => {
             }
 
             setEditorState(EditorState.createEmpty());
-            setCategory('');
             setId(undefined);
             setVisible(false);
             getData(currentPage);
@@ -527,7 +511,6 @@ const HeavenHellContent = () => {
     const handleEdit = (content) => {
         const newEditorState = convertHTMLToContent(content.Content || '');
         setEditorState(newEditorState);
-        setCategory(content.Category || '');
         setId(content._id);
         setVisible(true);
     };
@@ -652,44 +635,6 @@ const HeavenHellContent = () => {
                             </div>
 
                             <div className="flex gap-3">
-                                {/* Category Filter */}
-                                <div className="relative inline-block w-64" ref={dropdownRef}>
-                                    <button
-                                        className="w-full flex items-center justify-between px-4 py-2 bg-white dark:border-gray-800 border rounded-md text-gray-600 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-300"
-                                        onClick={() => setIsAccessOpen(!isAccessOpen)}
-                                    >
-                                        <div className="flex items-center">
-                                            <span>{activeTab2 === '' ? 'All Categories' : activeTab2}</span>
-                                        </div>
-                                        <FontAwesomeIcon icon={faChevronDown} />
-                                    </button>
-
-                                    {isAccessOpen && (
-                                        <div className="absolute w-full mt-2 bg-white shadow-lg rounded-lg border dark:bg-gray-800 z-50 px-1">
-                                            <button
-                                                onClick={() => {
-                                                    setActiveTab2('');
-                                                    setIsAccessOpen(false);
-                                                }}
-                                                className={`flex items-center w-full px-4 py-2 my-1 text-left text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/10 rounded-md ${activeTab2 === "" ? "bg-gray-100 dark:bg-white/10" : ""}`}
-                                            >
-                                                All Categories
-                                            </button>
-                                            {accessTypes.map((type) => (
-                                                <button
-                                                    key={type.id}
-                                                    onClick={() => {
-                                                        setActiveTab2(type.id);
-                                                        setIsAccessOpen(false);
-                                                    }}
-                                                    className={`flex items-center w-full px-4 py-2 my-1 text-left text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/10 rounded-md ${activeTab2 === type.id ? "bg-gray-100 dark:bg-white/10" : ""}`}
-                                                >
-                                                    {type.label}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
 
                                 <Button
                                     onClick={() => toggleModal('add')}
@@ -720,7 +665,6 @@ const HeavenHellContent = () => {
                                         </TableCell>
                                         <TableCell isHeader className="py-4 font-medium text-gray-500 px-2 border-r border-gray-200 dark:border-gray-700">Index</TableCell>
                                         <TableCell isHeader className="py-7 font-medium text-gray-500 px-2 border-r border-gray-200 dark:border-gray-700">HeavenHell Question</TableCell>
-                                        <TableCell isHeader className="py-7 font-medium text-gray-500 px-2 border-r border-gray-200 dark:border-gray-700">Category</TableCell>
                                         <TableCell isHeader className="py-7 font-medium text-gray-500 px-2 border-r border-gray-200 dark:border-gray-700">Actions</TableCell>
                                     </TableRow>
                                 </TableHeader>
@@ -753,10 +697,6 @@ const HeavenHellContent = () => {
                                                     >
                                                         <FontAwesomeIcon icon={faCopy} />
                                                     </button>
-                                                </TableCell>
-
-                                                <TableCell className="py-3 px-2 border-r border-gray-200 dark:border-gray-700 dark:text-gray-400">
-                                                    {content.Category || 'N/A'}
                                                 </TableCell>
 
                                                 <TableCell className="py-3 px-2 border-r border-gray-200 dark:border-gray-700">
@@ -814,24 +754,6 @@ const HeavenHellContent = () => {
                         <div className="px-6 py-4">
                             <form onSubmit={handleSubmit}>
                                 <div className="py-2">
-                                    <div className="py-2 mb-8">
-                                        <label className="block font-medium mb-2">
-                                            Category
-                                            <span className="text-red-500 pl-2 font-normal text-lg">*</span>
-                                        </label>
-                                        <select
-                                            value={Category}
-                                            onChange={(e) => setCategory(e.target.value)}
-                                            disabled={isSubmitting}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                            required
-                                        >
-                                            <option value="">Select Category</option>
-                                            <option value="Heaven">Heaven</option>
-                                            <option value="Hell">Hell</option>
-                                        </select>
-                                    </div>
-
                                     <div className="mb-4 relative">
                                         <label className="block font-medium mb-2">
                                             Question

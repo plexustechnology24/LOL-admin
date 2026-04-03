@@ -14,7 +14,7 @@ import EmojiPicker from 'emoji-picker-react';
 import { EditorState, Modifier, convertToRaw, convertFromRaw, RichUtils } from 'draft-js';
 
 
-const ChallengeContent = () => {
+const ConfessionContent = () => {
     const [visible, setVisible] = useState(false);
     const [data, setData] = useState([]);
     const [pagination, setPagination] = useState([]);
@@ -24,6 +24,7 @@ const ChallengeContent = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(15);
+    const [Category, setCategory] = useState('');
     const [deleteModal, setDeleteModal] = useState({ isOpen: false, id: null, isBulk: false });
     const [selectedItems, setSelectedItems] = useState([]);
     const [selectAll, setSelectAll] = useState(false);
@@ -41,10 +42,8 @@ const ChallengeContent = () => {
     const [activeTab2, setActiveTab2] = useState('');
 
     const accessTypes = [
-        { id: 'Angry', label: 'Angry' },
-        { id: 'Happy', label: 'Happy' },
-        { id: 'Love', label: 'Love' },
-        { id: 'Sad', label: 'Sad' }
+        { id: 'Confession', label: 'Confession' },
+        { id: 'Question', label: 'Question' },
     ];
 
     const indexOfLastItem = currentPage * itemsPerPage;
@@ -359,7 +358,8 @@ const ChallengeContent = () => {
         const payload = {
             page: page !== null ? page : currentPage,
             limit: itemsPerPage,
-            question: "challenge"
+            category: activeTab2 || undefined,
+            question: "confession"
         };
 
         axios.post('https://api.lolcards.link/api/content/read', payload)
@@ -426,7 +426,7 @@ const ChallengeContent = () => {
 
         const payload = {
             ids: selectedItems,
-            TypeId: "12" // Use appropriate TypeId for Challenge content
+            TypeId: "15" // Use appropriate TypeId for confession content
         };
 
         axios.post('https://api.lolcards.link/api/admin/deleteMultiple', payload)
@@ -446,7 +446,7 @@ const ChallengeContent = () => {
 
     const handleDelete = () => {
         axios
-            .delete(`https://api.lolcards.link/api/content/delete/${deleteModal.id}`, { data: { question: "challenge" } })
+            .delete(`https://api.lolcards.link/api/content/delete/${deleteModal.id}`, { data: { question: "confession" } })
             .then((res) => {
                 if (currentItems.length === 1 && currentPage > 1) {
                     setCurrentPage(currentPage - 1);
@@ -467,9 +467,11 @@ const ChallengeContent = () => {
             if (mode === 'add') {
                 setId(undefined);
                 setEditorState(EditorState.createEmpty());
+                setCategory('');
             }
         } else {
             setEditorState(EditorState.createEmpty());
+            setCategory('');
         }
         setVisible(!visible);
     };
@@ -478,6 +480,11 @@ const ChallengeContent = () => {
         e.preventDefault();
 
         if (isSubmitting) return;
+
+        if (!Category) {
+            toast.error('Please select a category');
+            return;
+        }
 
         // Validate content from editor
         const plainText = editorState.getCurrentContent().getPlainText().trim();
@@ -500,7 +507,8 @@ const ChallengeContent = () => {
 
             const payload = {
                 Content: htmlContent,
-            question: "challenge"
+                Category: Category,
+                question: "confession"
             };
 
             if (id) {
@@ -516,6 +524,7 @@ const ChallengeContent = () => {
             }
 
             setEditorState(EditorState.createEmpty());
+            setCategory('');
             setId(undefined);
             setVisible(false);
             getData(currentPage);
@@ -530,6 +539,7 @@ const ChallengeContent = () => {
     const handleEdit = (content) => {
         const newEditorState = convertHTMLToContent(content.Content || '');
         setEditorState(newEditorState);
+        setCategory(content.Category || '');
         setId(content._id);
         setVisible(true);
     };
@@ -612,7 +622,7 @@ const ChallengeContent = () => {
 
     return (
         <div>
-            <PageBreadcrumb pageTitle="Challenge Content" />
+            <PageBreadcrumb pageTitle="Confession or Question Content" />
 
             <div className="space-y-6 sticky left-0">
                 <div
@@ -654,6 +664,45 @@ const ChallengeContent = () => {
                             </div>
 
                             <div className="flex gap-3">
+                                {/* Category Filter */}
+                                <div className="relative inline-block w-64">
+                                    <button
+                                        className="w-full flex items-center justify-between px-4 py-2 bg-white dark:border-gray-800 border rounded-md text-gray-600 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-300"
+                                        onClick={() => setIsAccessOpen(!isAccessOpen)}
+                                    >
+                                        <div className="flex items-center">
+                                            <span>{activeTab2 === '' ? 'All Categories' : activeTab2}</span>
+                                        </div>
+                                        <FontAwesomeIcon icon={faChevronDown} />
+                                    </button>
+
+                                    {isAccessOpen && (
+                                        <div className="absolute w-full mt-2 bg-white shadow-lg rounded-lg border dark:bg-gray-800 z-50 px-1">
+                                            <button
+                                                onClick={() => {
+                                                    setActiveTab2('');
+                                                    setIsAccessOpen(false);
+                                                }}
+                                                className={`flex items-center w-full px-4 py-2 my-1 text-left text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/10 rounded-md ${activeTab2 === "" ? "bg-gray-100 dark:bg-white/10" : ""}`}
+                                            >
+                                                All Categories
+                                            </button>
+                                            {accessTypes.map((type) => (
+                                                <button
+                                                    key={type.id}
+                                                    onClick={() => {
+                                                        setActiveTab2(type.id);
+                                                        setIsAccessOpen(false);
+                                                    }}
+                                                    className={`flex items-center w-full px-4 py-2 my-1 text-left text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/10 rounded-md ${activeTab2 === type.id ? "bg-gray-100 dark:bg-white/10" : ""}`}
+                                                >
+                                                    {type.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
                                 <Button
                                     onClick={() => toggleModal('add')}
                                     className="rounded-md border-0 shadow-md px-4 py-2 text-white"
@@ -682,7 +731,8 @@ const ChallengeContent = () => {
                                             </div>
                                         </TableCell>
                                         <TableCell isHeader className="py-4 font-medium text-gray-500 px-2 border-r border-gray-200 dark:border-gray-700">Index</TableCell>
-                                        <TableCell isHeader className="py-7 font-medium text-gray-500 px-2 border-r border-gray-200 dark:border-gray-700">Challenge Content</TableCell>
+                                        <TableCell isHeader className="py-7 font-medium text-gray-500 px-2 border-r border-gray-200 dark:border-gray-700">Content</TableCell>
+                                        <TableCell isHeader className="py-7 font-medium text-gray-500 px-2 border-r border-gray-200 dark:border-gray-700">Category</TableCell>
                                         <TableCell isHeader className="py-7 font-medium text-gray-500 px-2 border-r border-gray-200 dark:border-gray-700">Actions</TableCell>
                                     </TableRow>
                                 </TableHeader>
@@ -706,27 +756,20 @@ const ChallengeContent = () => {
                                                     {indexOfFirstItem + index + 1}
                                                 </TableCell>
 
-                                                <TableCell
-                                                    className="py-3 px-2 border-r border-gray-200 
-             dark:border-gray-700 dark:text-gray-400 
-             w-[650px] max-w-[650px]"
-                                                >
-                                                    <div className="flex items-center gap-4">
+                                                <TableCell className="py-3 px-2 border-r border-gray-200 dark:border-gray-700 dark:text-gray-400 flex items-center justify-center gap-4">
 
-                                                        <div className="flex-1 min-w-0 break-words whitespace-normal">
-                                                            {renderHTMLContent(content.Content)}
-                                                        </div>
-
-                                                        <button
-                                                            className="text-gray-600 hover:text-gray-800 flex-shrink-0"
-                                                            onClick={() => handleCopyToClipboard(content)}
-                                                        >
-                                                            <FontAwesomeIcon icon={faCopy} />
-                                                        </button>
-
-                                                    </div>
+                                                    {renderHTMLContent(content.Content)}
+                                                    <button
+                                                        className="text-gray-600 hover:text-gray-800"
+                                                        onClick={() => handleCopyToClipboard(content)}
+                                                    >
+                                                        <FontAwesomeIcon icon={faCopy} />
+                                                    </button>
                                                 </TableCell>
 
+                                                <TableCell className="py-3 px-2 border-r border-gray-200 dark:border-gray-700 dark:text-gray-400">
+                                                    {content.Category || 'N/A'}
+                                                </TableCell>
 
                                                 <TableCell className="py-3 px-2 border-r border-gray-200 dark:border-gray-700">
                                                     <div className="flex align-middle justify-center gap-4 h-full">
@@ -783,6 +826,23 @@ const ChallengeContent = () => {
                         <div className="px-6 py-4">
                             <form onSubmit={handleSubmit}>
                                 <div className="py-2">
+                                    <div className="py-2 mb-8">
+                                        <label className="block font-medium mb-2">
+                                            Category
+                                            <span className="text-red-500 pl-2 font-normal text-lg">*</span>
+                                        </label>
+                                        <select
+                                            value={Category}
+                                            onChange={(e) => setCategory(e.target.value)}
+                                            disabled={isSubmitting}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                            required
+                                        >
+                                            <option value="">Select Category</option>
+                                            <option value="Confession">Confession</option>
+                                            <option value="Question">Question</option>
+                                        </select>
+                                    </div>
 
                                     <div className="mb-4 relative">
                                         <label className="block font-medium mb-2">
@@ -918,13 +978,13 @@ const ChallengeContent = () => {
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[99999]">
                     <div className="bg-white rounded-lg p-6 w-full max-w-sm mx-4 shadow-lg">
                         <h2 className="text-xl font-semibold text-gray-800 mb-3">
-                            {deleteModal.isBulk ? 'Delete Selected Items' : 'Delete Challenge Content'}
+                            {deleteModal.isBulk ? 'Delete Selected Items' : 'Delete Content'}
                         </h2>
 
                         <p className="text-gray-700 mb-6">
                             {deleteModal.isBulk
                                 ? `Are you sure you want to delete ${selectedItems.length} selected items?`
-                                : 'Are you sure you want to delete this Challenge Content?'
+                                : 'Are you sure you want to delete this Content?'
                             }
                         </p>
 
@@ -954,4 +1014,4 @@ const ChallengeContent = () => {
     );
 };
 
-export default ChallengeContent;
+export default ConfessionContent;

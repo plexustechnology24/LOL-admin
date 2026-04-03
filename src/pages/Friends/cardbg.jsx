@@ -900,6 +900,7 @@ const FriendCardBg = () => {
                 totalImages={pagination ? pagination.total : filteredData.length}
                 currentPage={currentPage}
                 itemsPerPage={itemsPerPage}
+                type={"7"}
             />
         </div>
     );

@@ -6,7 +6,7 @@ import { Button } from "react-bootstrap";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChevronDown, faEdit, faPlus, faTrash, faBold, faItalic, faUnderline } from "@fortawesome/free-solid-svg-icons";
+import { faEdit, faPlus, faTrash, faBold, faItalic, faUnderline } from "@fortawesome/free-solid-svg-icons";
 import { faCopy, faFaceSmile } from "@fortawesome/free-regular-svg-icons";
 import CustomPagination from "../../components/common/pagination";
 import { Editor } from 'react-draft-wysiwyg';
@@ -14,9 +14,8 @@ import EmojiPicker from 'emoji-picker-react';
 import { EditorState, Modifier, convertToRaw, convertFromRaw, RichUtils } from 'draft-js';
 
 
-const ChallengeContent = () => {
+const RoastContent = () => {
     const [visible, setVisible] = useState(false);
-    const [data, setData] = useState([]);
     const [pagination, setPagination] = useState([]);
     const [id, setId] = useState();
     const [loading, setLoading] = useState(true);
@@ -39,13 +38,6 @@ const ChallengeContent = () => {
 
     const [isAccessOpen, setIsAccessOpen] = useState(false);
     const [activeTab2, setActiveTab2] = useState('');
-
-    const accessTypes = [
-        { id: 'Angry', label: 'Angry' },
-        { id: 'Happy', label: 'Happy' },
-        { id: 'Love', label: 'Love' },
-        { id: 'Sad', label: 'Sad' }
-    ];
 
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -259,15 +251,6 @@ const ChallengeContent = () => {
         });
     };
 
-    const handleBeforeInput = (chars, editorState) => {
-        const currentText = editorState.getCurrentContent().getPlainText();
-        const currentLength = [...currentText].length; // Use spread operator
-
-        if (currentLength >= 150) {
-            return 'handled';  // stops further typing
-        }
-        return 'not-handled';
-    };
 
     const handlePastedText = (text, html, editorState) => {
         const sanitizedText = sanitizeEmojiPlaceholders(text);
@@ -304,13 +287,6 @@ const ChallengeContent = () => {
         return 'handled'; // prevent default paste
     };
 
-
-    const validate = () => {
-        const newErrors = {};
-        const plainText = editorState.getCurrentContent().getPlainText().trim();
-        if (!plainText) newErrors.description = 'Notification Description is required';
-        return newErrors;
-    };
 
     const handleEmojiSelect = (emoji) => {
         const contentState = editorState.getCurrentContent();
@@ -359,12 +335,11 @@ const ChallengeContent = () => {
         const payload = {
             page: page !== null ? page : currentPage,
             limit: itemsPerPage,
-            question: "challenge"
+            question: "roast"
         };
 
         axios.post('https://api.lolcards.link/api/content/read', payload)
             .then((res) => {
-                setData(res.data.data);
                 setPagination(res.data.pagination);
                 setFilteredData(res.data.data);
                 if (res.data.pagination) {
@@ -426,7 +401,7 @@ const ChallengeContent = () => {
 
         const payload = {
             ids: selectedItems,
-            TypeId: "12" // Use appropriate TypeId for Challenge content
+            TypeId: "18" // Use appropriate TypeId for roast content
         };
 
         axios.post('https://api.lolcards.link/api/admin/deleteMultiple', payload)
@@ -446,7 +421,7 @@ const ChallengeContent = () => {
 
     const handleDelete = () => {
         axios
-            .delete(`https://api.lolcards.link/api/content/delete/${deleteModal.id}`, { data: { question: "challenge" } })
+            .delete(`https://api.lolcards.link/api/content/delete/${deleteModal.id}`, { data: { question: "roast" } })
             .then((res) => {
                 if (currentItems.length === 1 && currentPage > 1) {
                     setCurrentPage(currentPage - 1);
@@ -500,7 +475,7 @@ const ChallengeContent = () => {
 
             const payload = {
                 Content: htmlContent,
-            question: "challenge"
+                question: "roast"
             };
 
             if (id) {
@@ -612,7 +587,7 @@ const ChallengeContent = () => {
 
     return (
         <div>
-            <PageBreadcrumb pageTitle="Challenge Content" />
+            <PageBreadcrumb pageTitle="Roast Content" />
 
             <div className="space-y-6 sticky left-0">
                 <div
@@ -682,7 +657,7 @@ const ChallengeContent = () => {
                                             </div>
                                         </TableCell>
                                         <TableCell isHeader className="py-4 font-medium text-gray-500 px-2 border-r border-gray-200 dark:border-gray-700">Index</TableCell>
-                                        <TableCell isHeader className="py-7 font-medium text-gray-500 px-2 border-r border-gray-200 dark:border-gray-700">Challenge Content</TableCell>
+                                        <TableCell isHeader className="py-7 font-medium text-gray-500 px-2 border-r border-gray-200 dark:border-gray-700">Roast Content</TableCell>
                                         <TableCell isHeader className="py-7 font-medium text-gray-500 px-2 border-r border-gray-200 dark:border-gray-700">Actions</TableCell>
                                     </TableRow>
                                 </TableHeader>
@@ -918,13 +893,13 @@ const ChallengeContent = () => {
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[99999]">
                     <div className="bg-white rounded-lg p-6 w-full max-w-sm mx-4 shadow-lg">
                         <h2 className="text-xl font-semibold text-gray-800 mb-3">
-                            {deleteModal.isBulk ? 'Delete Selected Items' : 'Delete Challenge Content'}
+                            {deleteModal.isBulk ? 'Delete Selected Items' : 'Delete Roast Content'}
                         </h2>
 
                         <p className="text-gray-700 mb-6">
                             {deleteModal.isBulk
                                 ? `Are you sure you want to delete ${selectedItems.length} selected items?`
-                                : 'Are you sure you want to delete this Challenge Content?'
+                                : 'Are you sure you want to delete this Roast Content?'
                             }
                         </p>
 
@@ -954,4 +929,4 @@ const ChallengeContent = () => {
     );
 };
 
-export default ChallengeContent;
+export default RoastContent;

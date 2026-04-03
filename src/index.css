@@ -848,3 +848,28 @@ video::-webkit-media-controls {
 .animate-pulse {
   animation: pulse 1.5s infinite;
 }
+
+.bricolage-grotesque {
+    font-family: "Bricolage Grotesque", sans-serif;
+    font-style: normal;
+    font-weight: 700;
+}
+
+
+.bricolage-grotesque4 {
+    font-family: "Bricolage Grotesque", sans-serif;
+    font-style: normal;
+    font-weight: 500;
+}
+
+@font-face {
+    font-family: 'Spider';
+    src: url('./Font/Spider.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+.Spider {
+    font-family: 'Spider', sans-serif;
+    padding-top: 25px !important;
+}

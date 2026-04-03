@@ -745,6 +745,7 @@ const CardBg = () => {
                 totalImages={pagination ? pagination.total : filteredData.length}
                 currentPage={currentPage}
                 itemsPerPage={itemsPerPage}
+                type={"3"}
             />
         </div>
     );

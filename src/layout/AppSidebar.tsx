@@ -28,6 +28,7 @@ import {
   faTrophy,
   faMessage,
   faClock,
+  faImage,
 } from "@fortawesome/free-solid-svg-icons";
 
 type NavItem = {
@@ -67,48 +68,81 @@ const navItems: NavItem[] = [
 
 const questionItems: NavItem[] = [
   {
-    icon: <FontAwesomeIcon icon={faImagePortrait} />,
-    name: "Annoy Funny CardBg (3 Ques)",
-    path: "/cardBg",
-  },
-  {
-    name: "Emotion (4 Ques)",
-    icon: <FontAwesomeIcon icon={faFaceGrinStars} />,
+    name: "Pic Roast",
+    icon: <FontAwesomeIcon icon={faImage} />,
     subItems: [
-      { name: "CardBg", path: "/emotion/cardBg" },
-      { name: "Emoji", path: "/emotion/emoji" },
-      { name: "Content", path: "/emotion/content" },
+      { name: "Backend content", path: "/picRoast/content" },
     ],
   },
   {
-    name: "Hotness (6 Ques)",
+    name: "Fun Card",
+    icon: <FontAwesomeIcon icon={faImagePortrait} />,
+    subItems: [
+      { name: "CardBg", path: "/cardBg" },
+    ],
+  },
+  {
+    name: "Emotion",
+    icon: <FontAwesomeIcon icon={faFaceGrinStars} />,
+    subItems: [
+      { name: "Emoji", path: "/emotion/emoji" },
+      { name: "Backend content", path: "/emotion/content" },
+      { name: "CardBg", path: "/emotion/cardBg" },
+    ],
+  },
+  {
+    name: "Confession or Question",
+    icon: <FontAwesomeIcon icon={faPencil} />,
+    subItems: [
+      { name: "Backend content", path: "/confession/content" },
+    ],
+  },
+  {
+    name: "Hotness",
     icon: <FontAwesomeIcon icon={faFire} />,
     subItems: [
       { name: "Category", path: "/hotness/category" },
+      { name: "Backend content", path: "/hotness/content" },
       { name: "CardBg", path: "/hotness/cardBg" },
     ],
   },
   {
+    name: "Friends or Love or Crush",
     icon: <FontAwesomeIcon icon={faHeart} />,
-    name: "Friends or Love or Crush CardBg (7 Ques)",
-    path: "/friend/cardBg",
+    subItems: [
+      { name: "Backend content", path: "/friend/content" },
+      { name: "CardBg", path: "/friend/cardBg" },
+    ],
   },
   {
+    name: "Roast me",
+    icon: <FontAwesomeIcon icon={faPencil} />,
+    subItems: [
+      { name: "Backend content", path: "/roast/content" },
+    ],
+  },
+  {
+    name: "Bluff Master",
     icon: <FontAwesomeIcon icon={faMask} />,
-    name: "Bluff CardBg (9 Ques)",
-    path: "/bluff/cardBg",
+    subItems: [
+      { name: "Backend content", path: "/bluff/content" },
+      { name: "CardBg", path: "/bluff/cardBg" },
+    ],
   },
   {
+    name: "Challenge",
     icon: <FontAwesomeIcon icon={faTrophy} />,
-    name: "Challenge Content (10 Ques)",
-    path: "/challenge/content",
+    subItems: [
+      { name: "Backend content", path: "/challenge/content" },
+    ],
   },
   {
-    name: "Heaven Hell (11 Ques)",
+    name: "Heaven Hell",
     icon: <FontAwesomeIcon icon={faFire} />,
     subItems: [
+      { name: "Questions", path: "/heaven-hell/question" },
+      { name: "Backend content", path: "/heaven-hell/content" },
       { name: "CardBg", path: "/heaven-hell/cardBg" },
-      { name: "Content", path: "/heaven-hell/content" },
     ],
   },
   {
@@ -279,7 +313,7 @@ const AppSidebar: React.FC = () => {
                 {nav.icon}
               </span>
               {(isExpanded || isHovered || isMobileOpen) && (
-                <span className="menu-item-text">{nav.name}</span>
+                <span className="menu-item-text text-left">{nav.name}</span>
               )}
               {(isExpanded || isHovered || isMobileOpen) && (
                 <ChevronDownIcon

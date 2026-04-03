@@ -900,6 +900,7 @@ const HotnessCardBg = () => {
                 totalImages={pagination ? pagination.total : filteredData.length}  // Changed from data.pagination to pagination
                 currentPage={currentPage}
                 itemsPerPage={itemsPerPage}
+                type={"6"}
             />
         </div>
     );

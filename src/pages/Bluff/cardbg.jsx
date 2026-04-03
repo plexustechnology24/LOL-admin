@@ -1079,6 +1079,7 @@ const BluffCardBg = () => {
                 totalImages={pagination ? pagination.total : filteredData.length}
                 currentPage={currentPage}
                 itemsPerPage={itemsPerPage}
+                type={"9"}
             />
         </div>
     );

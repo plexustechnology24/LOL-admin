@@ -1,8 +1,7 @@
 import React from "react";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../components/ui/table";
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { toast } from 'react-toastify';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCopy } from "@fortawesome/free-regular-svg-icons";
 
@@ -125,8 +124,6 @@ const TestingUrls = () => {
                     </div>
                 </div>
             </div>
-
-            <ToastContainer position="top-center" className="!z-[99999]" />
         </div>
     );
 };

@@ -978,6 +978,7 @@ const EmotionCardBg = () => {
                 totalImages={pagination ? pagination.total : filteredData.length}
                 currentPage={currentPage}
                 itemsPerPage={itemsPerPage}
+                type={"4"}
             />
         </div>
     );
